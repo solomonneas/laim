@@ -29,9 +29,9 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-log() { echo -e "${BLUE}[$(date '+%H:%M:%S')]${NC} $*"; }
-success() { echo -e "${GREEN}[SUCCESS]${NC} $*"; }
-warn() { echo -e "${YELLOW}[WARNING]${NC} $*"; }
+log() { echo -e "${BLUE}[$(date '+%H:%M:%S')]${NC} $*" >&2; }
+success() { echo -e "${GREEN}[SUCCESS]${NC} $*" >&2; }
+warn() { echo -e "${YELLOW}[WARNING]${NC} $*" >&2; }
 error() { echo -e "${RED}[ERROR]${NC} $*" >&2; exit 1; }
 
 check_root() {
