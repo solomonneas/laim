@@ -147,9 +147,12 @@ async def logout():
 async def dashboard(
     request: Request,
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_user)
+    user: Optional[User] = Depends(get_current_user_optional)
 ):
     """Render main dashboard."""
+    # Redirect to login if not authenticated
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
     # Get all active items
     result = await db.execute(
         select(InventoryItem)
