@@ -26,53 +26,53 @@ LAIM is a full-stack web application with a clear separation between frontend an
 ### How It Works
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                           User Browser                               │
-│  ┌─────────────────────────────────────────────────────────────┐    │
-│  │                    Frontend (Templates)                      │    │
-│  │  • Jinja2 HTML templates rendered server-side               │    │
-│  │  • Tailwind CSS for styling                                 │    │
-│  │  • Vanilla JavaScript for interactivity (search, modals)    │    │
-│  └─────────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────────┘
-                                   │
-                                   │ HTTP Requests
-                                   ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                        FastAPI Backend                               │
-│  ┌─────────────────────────────────────────────────────────────┐    │
-│  │                      main.py (Routes)                        │    │
-│  │  • HTML routes (/, /login) - render templates               │    │
-│  │  • API routes (/api/*) - return JSON                        │    │
-│  │  • Authentication middleware (JWT in cookies)               │    │
-│  └─────────────────────────────────────────────────────────────┘    │
-│                                   │                                  │
-│  ┌────────────────┐    ┌─────────────────┐    ┌────────────────┐    │
-│  │   auth.py      │    │   schemas.py    │    │  scheduler.py  │    │
-│  │ JWT tokens     │    │ Pydantic models │    │ APScheduler    │    │
-│  │ Password hash  │    │ Validation      │    │ Background jobs│    │
-│  └────────────────┘    └─────────────────┘    └────────────────┘    │
-│                                   │                                  │
-│  ┌─────────────────────────────────────────────────────────────┐    │
-│  │                    integrations/                             │    │
-│  │  • NetdiscoClient - fetches devices from Netdisco API       │    │
-│  │  • LibreNMSClient - fetches devices from LibreNMS API       │    │
-│  │  • DeviceSyncService - merges, dedupes, upserts devices     │    │
-│  └─────────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────────┘
-                                   │
-                                   │ SQLAlchemy ORM
-                                   ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                        PostgreSQL Database                           │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐               │
-│  │    users     │  │inventory_items│  │  sync_logs   │               │
-│  │ - username   │  │ - hostname    │  │ - started_at │               │
-│  │ - password   │  │ - serial_num  │  │ - status     │               │
-│  │ - role       │  │ - item_type   │  │ - created    │               │
-│  └──────────────┘  │ - source      │  │ - updated    │               │
-│                    └──────────────┘  └──────────────┘               │
-└─────────────────────────────────────────────────────────────────────┘
++-----------------------------------------------------------------------+
+|                            User Browser                               |
+|  +----------------------------------------------------------------+  |
+|  |                     Frontend (Templates)                       |  |
+|  |  - Jinja2 HTML templates rendered server-side                  |  |
+|  |  - Tailwind CSS for styling                                    |  |
+|  |  - Vanilla JavaScript for interactivity (search, modals)       |  |
+|  +----------------------------------------------------------------+  |
++-----------------------------------------------------------------------+
+                                    |
+                                    | HTTP Requests
+                                    v
++-----------------------------------------------------------------------+
+|                          FastAPI Backend                              |
+|  +----------------------------------------------------------------+  |
+|  |                       main.py (Routes)                         |  |
+|  |  - HTML routes (/, /login) - render templates                  |  |
+|  |  - API routes (/api/*) - return JSON                           |  |
+|  |  - Authentication middleware (JWT in cookies)                  |  |
+|  +----------------------------------------------------------------+  |
+|                                   |                                   |
+|  +------------------+  +------------------+  +------------------+     |
+|  |    auth.py       |  |   schemas.py     |  |  scheduler.py    |     |
+|  |  - JWT tokens    |  | - Pydantic models|  |  - APScheduler   |     |
+|  |  - Password hash |  | - Validation     |  |  - Background    |     |
+|  +------------------+  +------------------+  +------------------+     |
+|                                   |                                   |
+|  +----------------------------------------------------------------+  |
+|  |                       integrations/                            |  |
+|  |  - NetdiscoClient: fetches devices from Netdisco API           |  |
+|  |  - LibreNMSClient: fetches devices from LibreNMS API           |  |
+|  |  - DeviceSyncService: merges, dedupes, upserts devices         |  |
+|  +----------------------------------------------------------------+  |
++-----------------------------------------------------------------------+
+                                    |
+                                    | SQLAlchemy ORM
+                                    v
++-----------------------------------------------------------------------+
+|                         PostgreSQL Database                           |
+|  +------------------+  +------------------+  +------------------+     |
+|  |      users       |  | inventory_items  |  |    sync_logs     |     |
+|  |  - username      |  |  - hostname      |  |  - started_at    |     |
+|  |  - password      |  |  - serial_num    |  |  - status        |     |
+|  |  - role          |  |  - item_type     |  |  - created       |     |
+|  +------------------+  |  - source        |  |  - updated       |     |
+|                        +------------------+  +------------------+     |
++-----------------------------------------------------------------------+
 ```
 
 ### Frontend
