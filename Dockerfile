@@ -29,6 +29,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app/ ./app/
 COPY templates/ ./templates/
 COPY static/ ./static/
+COPY alembic/ ./alembic/
+COPY alembic.ini .
 
 # Create non-root user for security
 RUN useradd --create-home --shell /bin/bash appuser && \
