@@ -1,6 +1,6 @@
 # LAIM - Lab Asset Inventory Manager
 
-A modern, high-density hardware inventory management system built for lab environments. Features real-time search, category filtering, and a beautiful 2026-style UI with professional typography.
+A modern hardware inventory management system built for lab environments. Features real-time search, category filtering, and a sleek UI.
 
 ![LAIM Login](docs/login-screenshot.png)
 
@@ -11,13 +11,117 @@ A modern, high-density hardware inventory management system built for lab enviro
 
 ## Features
 
-- **5 Hardware Categories**: Laptops, Desktops, Smart TVs, Servers, and WAPs
+- **7 Hardware Categories**: Laptops, Desktops, Smart TVs, Servers, WAPs, Routers, and Switches
 - **Real-time Search**: Instant filtering across hostnames, serials, MACs, and asset tags
 - **RBAC**: Role-based access control with superuser and admin accounts
-- **Modern UI**: 2026-style design with Geist/Inter fonts and tabular numbers
+- **Sleek UI**: Clean design with Geist/Inter fonts and tabular numbers
 - **Docker-based**: Fully containerized FastAPI + PostgreSQL stack
-- **Proxmox Ready**: Automated LXC container deployment on Proxmox VE 9.1.2
+- **Proxmox Ready**: Automated LXC container deployment on Proxmox VE
 - **API Sync Integration**: Auto-discover devices from Netdisco and LibreNMS
+
+## Architecture Overview
+
+LAIM is a full-stack web application with a clear separation between frontend and backend components.
+
+### How It Works
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                           User Browser                               │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │                    Frontend (Templates)                      │    │
+│  │  • Jinja2 HTML templates rendered server-side               │    │
+│  │  • Tailwind CSS for styling                                 │    │
+│  │  • Vanilla JavaScript for interactivity (search, modals)    │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────┘
+                                   │
+                                   │ HTTP Requests
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                        FastAPI Backend                               │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │                      main.py (Routes)                        │    │
+│  │  • HTML routes (/, /login) - render templates               │    │
+│  │  • API routes (/api/*) - return JSON                        │    │
+│  │  • Authentication middleware (JWT in cookies)               │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+│                                   │                                  │
+│  ┌────────────────┐    ┌─────────────────┐    ┌────────────────┐    │
+│  │   auth.py      │    │   schemas.py    │    │  scheduler.py  │    │
+│  │ JWT tokens     │    │ Pydantic models │    │ APScheduler    │    │
+│  │ Password hash  │    │ Validation      │    │ Background jobs│    │
+│  └────────────────┘    └─────────────────┘    └────────────────┘    │
+│                                   │                                  │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │                    integrations/                             │    │
+│  │  • NetdiscoClient - fetches devices from Netdisco API       │    │
+│  │  • LibreNMSClient - fetches devices from LibreNMS API       │    │
+│  │  • DeviceSyncService - merges, dedupes, upserts devices     │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────┘
+                                   │
+                                   │ SQLAlchemy ORM
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                        PostgreSQL Database                           │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐               │
+│  │    users     │  │inventory_items│  │  sync_logs   │               │
+│  │ - username   │  │ - hostname    │  │ - started_at │               │
+│  │ - password   │  │ - serial_num  │  │ - status     │               │
+│  │ - role       │  │ - item_type   │  │ - created    │               │
+│  └──────────────┘  │ - source      │  │ - updated    │               │
+│                    └──────────────┘  └──────────────┘               │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Frontend
+
+The frontend uses **server-side rendering** with Jinja2 templates:
+
+- **`templates/base.html`** - Base layout with navigation, CSS imports, and common scripts
+- **`templates/login.html`** - Login form with credential validation
+- **`templates/dashboard.html`** - Main inventory view with search, filters, and data table
+
+**Key frontend features:**
+- Real-time search filtering via JavaScript (no page reload)
+- Modal dialogs for add/edit operations
+- Category filter chips for quick filtering
+- Responsive design with Tailwind CSS
+
+### Backend
+
+The backend is built with **FastAPI** (async Python web framework):
+
+- **`app/main.py`** - Route definitions, request handling, template rendering
+- **`app/models.py`** - SQLAlchemy ORM models (User, InventoryItem, SyncLog)
+- **`app/schemas.py`** - Pydantic schemas for request/response validation
+- **`app/auth.py`** - JWT token creation, password hashing, authentication middleware
+- **`app/database.py`** - Database connection pooling and session management
+
+**Request flow:**
+1. User submits request (e.g., `GET /api/items?search=laptop`)
+2. FastAPI routes request to handler function
+3. Handler validates input with Pydantic schemas
+4. SQLAlchemy queries PostgreSQL database
+5. Results serialized and returned as JSON (or rendered as HTML)
+
+### External Integrations
+
+The sync system connects to network monitoring tools:
+
+- **`app/integrations/base.py`** - Base HTTP client with retry logic and rate limiting
+- **`app/integrations/netdisco.py`** - Netdisco API client (device discovery)
+- **`app/integrations/librenms.py`** - LibreNMS API client (device monitoring)
+- **`app/integrations/sync.py`** - Orchestrates fetching, merging, and database updates
+
+**Sync flow:**
+1. Scheduler triggers sync (or manual API call)
+2. Clients fetch device lists from external APIs
+3. Devices merged (LibreNMS takes priority on conflicts)
+4. Deduplication by serial number or MAC address
+5. Existing records updated, new records created
+6. Results logged to sync_logs table
 
 ## Tech Stack
 
@@ -165,7 +269,7 @@ curl -X POST http://localhost:8000/api/sync/trigger \
 1. **Fetches devices** from configured sources (Netdisco and/or LibreNMS)
 2. **Merges data** - LibreNMS takes priority when the same device exists in both systems
 3. **Deduplicates** by serial number or MAC address
-4. **Auto-detects device type** based on model/vendor strings (WAP, Server, Laptop, etc.)
+4. **Auto-detects device type** based on model/vendor strings (Router, Switch, WAP, Server, etc.)
 5. **Upserts to inventory** - updates existing items or creates new ones
 6. **Logs results** to sync history for auditing
 
@@ -188,7 +292,7 @@ Each inventory item includes:
 - **Serial Number**: Manufacturer serial number
 - **MAC Address**: Network MAC address (optional)
 - **Asset Tag**: Internal asset tracking number
-- **Item Type**: Laptop, Desktop, Smart TV, Server, or WAP
+- **Item Type**: Laptop, Desktop, Smart TV, Server, WAP, Router, or Switch
 - **Room Location**: 2265 or 2266
 - **Sub-location**: Rack, shelf, or desk identifier
 - **Notes**: Additional information
@@ -255,22 +359,23 @@ inventory/
 ├── alembic/                 # Database migrations
 │   └── versions/            # Migration scripts
 ├── app/
-│   ├── models.py            # SQLAlchemy models
-│   ├── database.py          # Database configuration
-│   ├── auth.py              # Authentication utilities
-│   ├── schemas.py           # Pydantic schemas
-│   ├── main.py              # FastAPI application
-│   ├── seed.py              # Database seeding
-│   ├── scheduler.py         # Background sync scheduler
+│   ├── main.py              # FastAPI routes and request handlers
+│   ├── models.py            # SQLAlchemy ORM models
+│   ├── schemas.py           # Pydantic validation schemas
+│   ├── database.py          # Database connection management
+│   ├── auth.py              # JWT authentication utilities
+│   ├── seed.py              # Database seeding script
+│   ├── scheduler.py         # APScheduler background jobs
 │   └── integrations/        # External API clients
-│       ├── base.py          # Base HTTP client
+│       ├── base.py          # Base HTTP client with retry logic
 │       ├── netdisco.py      # Netdisco API client
 │       ├── librenms.py      # LibreNMS API client
-│       └── sync.py          # Device sync service
+│       └── sync.py          # Device sync orchestration
 ├── templates/
-│   ├── base.html            # Base template
+│   ├── base.html            # Base layout template
 │   ├── login.html           # Login page
-│   └── dashboard.html       # Main dashboard
+│   └── dashboard.html       # Main inventory dashboard
+├── static/                  # CSS, JavaScript, images
 └── docs/
     └── login-screenshot.png # UI screenshot
 ```
@@ -352,18 +457,11 @@ pct config 200
 - Sync deduplicates by serial number first, then MAC address
 - Devices without both will create new entries each sync
 
-## Design Philosophy
-
-- **Fast & Responsive**: Built for speed with a small dataset (hundreds of items)
-- **Professional Grade**: Production-ready code with proper error handling
-- **Beautiful UI**: Modern 2026 aesthetic with Swiss precision typography
-- **Repeatable**: Fully automated deployment from scratch
-
 ## Requirements
 
 ### Proxmox Deployment
-- Proxmox VE 9.1.2+
-- Debian 13 (Trixie) template
+- Proxmox VE 8.0+
+- Debian 12/13 template
 - 2GB RAM, 2 CPU cores, 16GB disk (minimum)
 
 ### Manual Deployment

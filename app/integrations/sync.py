@@ -24,6 +24,17 @@ logger = logging.getLogger(__name__)
 # Device Type Auto-Detection
 # -----------------------------------------------------------------------------
 TYPE_PATTERNS: dict[ItemType, list[str]] = {
+    ItemType.ROUTER: [
+        "router", "isr", "asr", "cisco router", "juniper router",
+        "mikrotik router", "edgerouter", "routeros", "vyos",
+        "pfsense", "opnsense", "fortigate", "srx",
+    ],
+    ItemType.SWITCH: [
+        "switch", "catalyst", "nexus", "arista", "juniper switch",
+        "dell switch", "powerswitch", "procurve", "comware",
+        "edgeswitch", "unifi switch", "usw-", "meraki ms",
+        "brocade", "icx", "fas", "s4048", "s5048", "z9100",
+    ],
     ItemType.WAP: [
         "wap", "wireless", "wifi", "ap", "access point", "aruba ap",
         "unifi ap", "uap-", "iap-", "aironet", "meraki mr",

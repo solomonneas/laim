@@ -32,6 +32,8 @@ class ItemType(enum.Enum):
     SMART_TV = "Smart TV"
     SERVER = "Server"
     WAP = "WAP"  # Wireless Access Point
+    ROUTER = "Router"
+    SWITCH = "Switch"
 
 
 class RoomLocation(enum.Enum):

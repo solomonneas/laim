@@ -536,6 +536,8 @@ def parse_item_type(value: str) -> ItemType:
         "WAP": ItemType.WAP,
         "ACCESS POINT": ItemType.WAP,
         "AP": ItemType.WAP,
+        "ROUTER": ItemType.ROUTER,
+        "SWITCH": ItemType.SWITCH,
     }
     if value in mapping:
         return mapping[value]
