@@ -1,5 +1,3 @@
-version: "3.9"
-
 #===============================================================================
 # LAIM - Lab Asset Inventory Manager
 # Docker Compose Orchestration

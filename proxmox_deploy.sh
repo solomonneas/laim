@@ -130,6 +130,13 @@ start_and_install_docker() {
         systemctl start docker
     '
     success "Docker installed"
+
+    log "Setting container hostname..."
+    pct exec "$CTID" -- bash -c "
+        hostnamectl set-hostname ${HOSTNAME}
+        echo '${HOSTNAME}' > /etc/hostname
+    "
+    success "Hostname set to ${HOSTNAME}"
 }
 
 clone_and_deploy() {
