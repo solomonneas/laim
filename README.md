@@ -28,24 +28,24 @@ LAIM is a full-stack web application with a clear separation between frontend an
 ```
 +-----------------------------------------------------------------------+
 |                            User Browser                               |
-|  +----------------------------------------------------------------+  |
-|  |                     Frontend (Templates)                       |  |
-|  |  - Jinja2 HTML templates rendered server-side                  |  |
-|  |  - Tailwind CSS for styling                                    |  |
-|  |  - Vanilla JavaScript for interactivity (search, modals)       |  |
-|  +----------------------------------------------------------------+  |
+|  +----------------------------------------------------------------+   |
+|  |                     Frontend (Templates)                       |   |
+|  |  - Jinja2 HTML templates rendered server-side                  |   |
+|  |  - Tailwind CSS for styling                                    |   |
+|  |  - Vanilla JavaScript for interactivity (search, modals)       |   |
+|  +----------------------------------------------------------------+   |
 +-----------------------------------------------------------------------+
                                     |
                                     | HTTP Requests
                                     v
 +-----------------------------------------------------------------------+
 |                          FastAPI Backend                              |
-|  +----------------------------------------------------------------+  |
-|  |                       main.py (Routes)                         |  |
-|  |  - HTML routes (/, /login) - render templates                  |  |
-|  |  - API routes (/api/*) - return JSON                           |  |
-|  |  - Authentication middleware (JWT in cookies)                  |  |
-|  +----------------------------------------------------------------+  |
+|  +----------------------------------------------------------------+   |
+|  |                       main.py (Routes)                         |   |
+|  |  - HTML routes (/, /login) - render templates                  |   |
+|  |  - API routes (/api/*) - return JSON                           |   |
+|  |  - Authentication middleware (JWT in cookies)                  |   |
+|  +----------------------------------------------------------------+   |
 |                                   |                                   |
 |  +------------------+  +------------------+  +------------------+     |
 |  |    auth.py       |  |   schemas.py     |  |  scheduler.py    |     |
@@ -53,12 +53,12 @@ LAIM is a full-stack web application with a clear separation between frontend an
 |  |  - Password hash |  | - Validation     |  |  - Background    |     |
 |  +------------------+  +------------------+  +------------------+     |
 |                                   |                                   |
-|  +----------------------------------------------------------------+  |
-|  |                       integrations/                            |  |
-|  |  - NetdiscoClient: fetches devices from Netdisco API           |  |
-|  |  - LibreNMSClient: fetches devices from LibreNMS API           |  |
-|  |  - DeviceSyncService: merges, dedupes, upserts devices         |  |
-|  +----------------------------------------------------------------+  |
+|  +----------------------------------------------------------------+   |
+|  |                       integrations/                            |   |
+|  |  - NetdiscoClient: fetches devices from Netdisco API           |   |
+|  |  - LibreNMSClient: fetches devices from LibreNMS API           |   |
+|  |  - DeviceSyncService: merges, dedupes, upserts devices         |   |
+|  +----------------------------------------------------------------+   |
 +-----------------------------------------------------------------------+
                                     |
                                     | SQLAlchemy ORM
