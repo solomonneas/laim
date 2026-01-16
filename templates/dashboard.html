@@ -89,6 +89,17 @@
                             {% endfor %}
                         </select>
 
+                        <!-- Import CSV Button -->
+                        <button
+                            id="import-csv-btn"
+                            class="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-sm font-semibold rounded-lg shadow-lg shadow-emerald-500/25 transition-smooth"
+                        >
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            Import CSV
+                        </button>
+
                         <!-- Add Button -->
                         <button
                             id="add-item-btn"
@@ -287,6 +298,95 @@
                 </button>
                 <button id="confirm-delete" class="flex-1 py-2 px-4 bg-red-600 hover:bg-red-500 text-white font-medium rounded-lg transition-smooth">
                     Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSV Import Modal -->
+<div id="csv-import-modal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-backdrop absolute inset-0" id="csv-backdrop"></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+        <div class="relative bg-slate-850 rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-2xl p-6">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-lg font-bold font-display text-white">Import CSV</h2>
+                    <p class="text-sm text-slate-400 mt-1">Upload a CSV file to bulk import inventory items</p>
+                </div>
+                <button id="close-csv-modal" class="p-1 text-slate-400 hover:text-white transition-smooth">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- CSV Format Info -->
+            <div class="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <h3 class="text-sm font-semibold text-blue-400 mb-2">Required CSV Columns:</h3>
+                <p class="text-xs text-slate-300 font-mono">hostname, serial_number, asset_tag, item_type, room_location</p>
+                <h3 class="text-sm font-semibold text-blue-400 mt-3 mb-2">Optional Columns:</h3>
+                <p class="text-xs text-slate-300 font-mono">mac_address, sub_location, notes</p>
+                <h3 class="text-sm font-semibold text-blue-400 mt-3 mb-2">Valid Values:</h3>
+                <ul class="text-xs text-slate-300 space-y-1">
+                    <li><span class="font-mono">item_type:</span> Laptop, Desktop, Smart TV, Server, WAP</li>
+                    <li><span class="font-mono">room_location:</span> 2265, 2266</li>
+                </ul>
+            </div>
+
+            <!-- File Upload -->
+            <div class="mb-6">
+                <input type="file" id="csv-file-input" accept=".csv" class="hidden">
+                <button id="select-csv-btn" class="w-full flex items-center justify-center gap-3 px-4 py-8 border-2 border-dashed border-slate-600 hover:border-emerald-500 rounded-lg transition-smooth group">
+                    <svg class="h-8 w-8 text-slate-500 group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    <div>
+                        <p class="text-sm font-semibold text-white group-hover:text-emerald-400"><span id="csv-file-name">Click to select CSV file</span></p>
+                        <p class="text-xs text-slate-400">or drag and drop</p>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Progress Bar -->
+            <div id="csv-progress" class="hidden mb-6">
+                <div class="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+                    <div id="csv-progress-bar" class="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p id="csv-progress-text" class="text-sm text-slate-400 mt-2 text-center">Processing...</p>
+            </div>
+
+            <!-- Results -->
+            <div id="csv-results" class="hidden mb-6 p-4 rounded-lg border">
+                <h3 class="text-sm font-semibold text-white mb-3">Import Results</h3>
+                <div class="grid grid-cols-3 gap-4 mb-3">
+                    <div class="text-center">
+                        <div id="csv-total" class="text-2xl font-bold text-white">0</div>
+                        <div class="text-xs text-slate-400">Total Rows</div>
+                    </div>
+                    <div class="text-center">
+                        <div id="csv-created" class="text-2xl font-bold text-emerald-400">0</div>
+                        <div class="text-xs text-slate-400">Created</div>
+                    </div>
+                    <div class="text-center">
+                        <div id="csv-skipped" class="text-2xl font-bold text-yellow-400">0</div>
+                        <div class="text-xs text-slate-400">Skipped</div>
+                    </div>
+                </div>
+                <div id="csv-errors-container" class="hidden">
+                    <div class="text-xs font-semibold text-red-400 mb-2">Errors:</div>
+                    <div id="csv-errors" class="text-xs text-red-300 space-y-1 max-h-32 overflow-y-auto"></div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-3">
+                <button id="cancel-csv" class="flex-1 py-2.5 px-4 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition-smooth">
+                    Cancel
+                </button>
+                <button id="upload-csv-btn" class="flex-1 py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-semibold rounded-lg shadow-lg shadow-emerald-500/25 transition-smooth disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    Upload & Import
                 </button>
             </div>
         </div>
@@ -567,6 +667,7 @@
         if (e.key === 'Escape') {
             closeItemModal();
             closeDeleteModal();
+            closeCsvModal();
         }
         // Ctrl/Cmd + K for search focus
         if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
@@ -577,5 +678,164 @@
 
     // Initial table row listeners
     attachRowListeners();
+
+    // -------------------------------------------------------------------------
+    // CSV Import Functionality
+    // -------------------------------------------------------------------------
+    const csvImportModal = document.getElementById('csv-import-modal');
+    const csvBackdrop = document.getElementById('csv-backdrop');
+    const importCsvBtn = document.getElementById('import-csv-btn');
+    const closeCsvModalBtn = document.getElementById('close-csv-modal');
+    const cancelCsvBtn = document.getElementById('cancel-csv');
+    const selectCsvBtn = document.getElementById('select-csv-btn');
+    const csvFileInput = document.getElementById('csv-file-input');
+    const csvFileName = document.getElementById('csv-file-name');
+    const uploadCsvBtn = document.getElementById('upload-csv-btn');
+    const csvProgress = document.getElementById('csv-progress');
+    const csvProgressBar = document.getElementById('csv-progress-bar');
+    const csvProgressText = document.getElementById('csv-progress-text');
+    const csvResults = document.getElementById('csv-results');
+    const csvTotal = document.getElementById('csv-total');
+    const csvCreated = document.getElementById('csv-created');
+    const csvSkipped = document.getElementById('csv-skipped');
+    const csvErrors = document.getElementById('csv-errors');
+    const csvErrorsContainer = document.getElementById('csv-errors-container');
+
+    let selectedFile = null;
+
+    function openCsvModal() {
+        csvImportModal.classList.remove('hidden');
+        resetCsvModal();
+    }
+
+    function closeCsvModal() {
+        csvImportModal.classList.add('hidden');
+        resetCsvModal();
+    }
+
+    function resetCsvModal() {
+        selectedFile = null;
+        csvFileInput.value = '';
+        csvFileName.textContent = 'Click to select CSV file';
+        uploadCsvBtn.disabled = true;
+        csvProgress.classList.add('hidden');
+        csvResults.classList.add('hidden');
+        csvErrorsContainer.classList.add('hidden');
+        csvProgressBar.style.width = '0%';
+    }
+
+    importCsvBtn.addEventListener('click', openCsvModal);
+    closeCsvModalBtn.addEventListener('click', closeCsvModal);
+    cancelCsvBtn.addEventListener('click', closeCsvModal);
+    csvBackdrop.addEventListener('click', closeCsvModal);
+
+    selectCsvBtn.addEventListener('click', () => {
+        csvFileInput.click();
+    });
+
+    csvFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (!file.name.endsWith('.csv')) {
+                alert('Please select a CSV file');
+                return;
+            }
+            selectedFile = file;
+            csvFileName.textContent = file.name;
+            uploadCsvBtn.disabled = false;
+        }
+    });
+
+    uploadCsvBtn.addEventListener('click', async () => {
+        if (!selectedFile) return;
+
+        // Show progress
+        csvProgress.classList.remove('hidden');
+        csvResults.classList.add('hidden');
+        uploadCsvBtn.disabled = true;
+        cancelCsvBtn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        try {
+            // Animate progress bar
+            csvProgressBar.style.width = '30%';
+            csvProgressText.textContent = 'Uploading...';
+
+            const response = await fetch('/api/import-csv', {
+                method: 'POST',
+                body: formData
+            });
+
+            csvProgressBar.style.width = '100%';
+            csvProgressText.textContent = 'Processing complete!';
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Import failed');
+            }
+
+            const result = await response.json();
+
+            // Show results
+            setTimeout(() => {
+                csvProgress.classList.add('hidden');
+                csvResults.classList.remove('hidden');
+                csvResults.className = 'mb-6 p-4 rounded-lg border border-emerald-500/50 bg-emerald-500/10';
+
+                csvTotal.textContent = result.total_rows;
+                csvCreated.textContent = result.created;
+                csvSkipped.textContent = result.skipped;
+
+                if (result.errors && result.errors.length > 0) {
+                    csvErrorsContainer.classList.remove('hidden');
+                    csvErrors.innerHTML = result.errors.map(err => `<div>${escapeHtml(err)}</div>`).join('');
+                }
+
+                // Refresh the table
+                fetchItems();
+
+                // Re-enable buttons
+                cancelCsvBtn.disabled = false;
+                cancelCsvBtn.textContent = 'Close';
+            }, 500);
+
+        } catch (error) {
+            csvProgress.classList.add('hidden');
+            csvResults.classList.remove('hidden');
+            csvResults.className = 'mb-6 p-4 rounded-lg border border-red-500/50 bg-red-500/10';
+            csvTotal.textContent = '0';
+            csvCreated.textContent = '0';
+            csvSkipped.textContent = '0';
+            csvErrorsContainer.classList.remove('hidden');
+            csvErrors.innerHTML = `<div>${escapeHtml(error.message)}</div>`;
+            cancelCsvBtn.disabled = false;
+            uploadCsvBtn.disabled = false;
+        }
+    });
+
+    // Drag and drop support
+    selectCsvBtn.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        selectCsvBtn.classList.add('border-emerald-500');
+    });
+
+    selectCsvBtn.addEventListener('dragleave', () => {
+        selectCsvBtn.classList.remove('border-emerald-500');
+    });
+
+    selectCsvBtn.addEventListener('drop', (e) => {
+        e.preventDefault();
+        selectCsvBtn.classList.remove('border-emerald-500');
+        const file = e.dataTransfer.files[0];
+        if (file && file.name.endsWith('.csv')) {
+            selectedFile = file;
+            csvFileName.textContent = file.name;
+            uploadCsvBtn.disabled = false;
+        } else {
+            alert('Please drop a CSV file');
+        }
+    });
 </script>
 {% endblock %}

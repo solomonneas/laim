@@ -4,11 +4,13 @@ FastAPI Main Application
 """
 
 import os
+import csv
+import io
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import FastAPI, Depends, HTTPException, status, Request, Response, Query
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import FastAPI, Depends, HTTPException, status, Request, Response, Query, UploadFile, File
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select, or_, func, desc
@@ -498,3 +500,154 @@ async def get_stats(
         "by_type": by_type,
         "by_room": by_room
     }
+
+
+# -----------------------------------------------------------------------------
+# CSV Import Helper Functions
+# -----------------------------------------------------------------------------
+def normalize_mac(mac: str) -> Optional[str]:
+    """Normalize MAC address to XX:XX:XX:XX:XX:XX format."""
+    if not mac or mac.strip() == "":
+        return None
+    mac = mac.upper().replace("-", "").replace(":", "").replace(".", "").replace(" ", "")
+    if len(mac) == 12:
+        return ":".join([mac[i:i+2] for i in range(0, 12, 2)])
+    return mac
+
+
+def parse_item_type(value: str) -> ItemType:
+    """Parse item type from string."""
+    value = value.strip().upper()
+    mapping = {
+        "LAPTOP": ItemType.LAPTOP,
+        "DESKTOP": ItemType.DESKTOP,
+        "SMART TV": ItemType.SMART_TV,
+        "SMARTTV": ItemType.SMART_TV,
+        "TV": ItemType.SMART_TV,
+        "SERVER": ItemType.SERVER,
+        "WAP": ItemType.WAP,
+        "ACCESS POINT": ItemType.WAP,
+        "AP": ItemType.WAP,
+    }
+    if value in mapping:
+        return mapping[value]
+    raise ValueError(f"Unknown item type: {value}")
+
+
+def parse_room(value: str) -> RoomLocation:
+    """Parse room location from string."""
+    value = value.strip().replace("Room ", "").replace("room ", "")
+    if value == "2265":
+        return RoomLocation.ROOM_2265
+    elif value == "2266":
+        return RoomLocation.ROOM_2266
+    raise ValueError(f"Unknown room: {value}")
+
+
+# -----------------------------------------------------------------------------
+# CSV Import API
+# -----------------------------------------------------------------------------
+@app.post("/api/import-csv")
+async def import_csv(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_admin)
+):
+    """Import inventory items from CSV file."""
+
+    # Validate file type
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="File must be a CSV")
+
+    # Read CSV content
+    try:
+        contents = await file.read()
+        decoded = contents.decode('utf-8')
+        csv_file = io.StringIO(decoded)
+        reader = csv.DictReader(csv_file)
+        rows = list(reader)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to read CSV: {str(e)}")
+
+    if not rows:
+        raise HTTPException(status_code=400, detail="CSV file is empty")
+
+    # Validate required columns
+    required_columns = ['hostname', 'serial_number', 'asset_tag', 'item_type', 'room_location']
+    first_row = rows[0]
+    missing_columns = [col for col in required_columns if col not in first_row]
+
+    if missing_columns:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Missing required columns: {', '.join(missing_columns)}"
+        )
+
+    # Process rows
+    created = 0
+    skipped = 0
+    errors = []
+
+    for idx, row in enumerate(rows, start=1):
+        hostname = row.get('hostname', '').strip()
+        serial = row.get('serial_number', '').strip()
+        asset_tag = row.get('asset_tag', '').strip()
+
+        if not hostname or not serial or not asset_tag:
+            errors.append(f"Row {idx}: Missing required fields")
+            continue
+
+        try:
+            # Parse fields
+            item_type = parse_item_type(row.get('item_type', ''))
+            room = parse_room(row.get('room_location', ''))
+            mac = normalize_mac(row.get('mac_address', ''))
+            sub_location = row.get('sub_location', '').strip() or None
+            notes = row.get('notes', '').strip() or None
+
+            # Check for duplicates
+            existing = await db.execute(
+                select(InventoryItem).where(
+                    (InventoryItem.serial_number == serial) |
+                    (InventoryItem.asset_tag == asset_tag)
+                )
+            )
+            if existing.scalar_one_or_none():
+                skipped += 1
+                continue
+
+            # Create item
+            item = InventoryItem(
+                hostname=hostname,
+                serial_number=serial,
+                asset_tag=asset_tag,
+                mac_address=mac,
+                item_type=item_type,
+                room_location=room,
+                sub_location=sub_location,
+                notes=notes,
+                created_by=user.id,
+                updated_by=user.id
+            )
+            db.add(item)
+            created += 1
+
+        except ValueError as e:
+            errors.append(f"Row {idx}: {str(e)}")
+        except Exception as e:
+            errors.append(f"Row {idx}: {str(e)}")
+
+    # Commit changes
+    try:
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to save items: {str(e)}")
+
+    return JSONResponse({
+        "success": True,
+        "total_rows": len(rows),
+        "created": created,
+        "skipped": skipped,
+        "errors": errors
+    })
