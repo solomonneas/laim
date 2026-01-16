@@ -188,6 +188,71 @@ docker compose exec web python -m app.seed --with-samples
 http://localhost:8000
 ```
 
+## Upgrading Existing Installation
+
+If you're upgrading from a previous version of LAIM, follow these steps to avoid database conflicts:
+
+### For LXC Container Deployments
+
+```bash
+# 1. Enter the container
+pct enter 200
+
+# 2. Navigate to application directory
+cd /opt/laim
+
+# 3. Stop the application
+docker compose down
+
+# 4. Pull latest code
+git pull origin main
+
+# 5. Rebuild containers (picks up new dependencies)
+docker compose build --no-cache
+
+# 6. Start the application
+docker compose up -d
+
+# 7. Run database migrations (IMPORTANT)
+docker compose exec web alembic upgrade head
+
+# 8. Verify everything is working
+docker compose logs -f web
+curl http://localhost:8000/health
+```
+
+### For Local Docker Deployments
+
+```bash
+# 1. Navigate to application directory
+cd /path/to/laim
+
+# 2. Stop the application
+docker compose down
+
+# 3. Pull latest code
+git pull origin main
+
+# 4. Rebuild containers
+docker compose build --no-cache
+
+# 5. Start the application
+docker compose up -d
+
+# 6. Run database migrations
+docker compose exec web alembic upgrade head
+
+# 7. Verify
+docker compose logs -f web
+```
+
+### Important Notes
+
+- **Always stop the application** before pulling updates
+- **Run migrations after rebuilding** to ensure database schema is updated
+- Fresh installations don't need migrations - SQLAlchemy creates everything automatically
+- If you encounter migration errors, check the Troubleshooting section below
+
 ## Default Credentials
 
 | Username | Password | Role |
@@ -440,6 +505,43 @@ pct config 200
 ```
 
 ## Troubleshooting
+
+### Migration Issues
+
+**"type 'syncstatus' already exists" or "column does not exist" errors:**
+
+This happens when the app started before migrations ran. To fix:
+
+```bash
+# Connect to database
+docker compose exec db psql -U laim -d laim
+
+# Add missing columns manually
+ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS source VARCHAR(50);
+ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS source_id VARCHAR(255);
+ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS last_synced_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS firmware_version VARCHAR(100);
+ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);
+ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS model VARCHAR(255);
+ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS vendor VARCHAR(255);
+
+# Add enum values
+ALTER TYPE itemtype ADD VALUE IF NOT EXISTS 'Router';
+ALTER TYPE itemtype ADD VALUE IF NOT EXISTS 'Switch';
+
+# Exit database
+\q
+
+# Mark migrations as complete
+docker compose exec web alembic stamp head
+
+# Restart application
+docker compose restart web
+```
+
+**Preventing migration issues:**
+- Always stop the app with `docker compose down` before pulling updates
+- Run migrations immediately after rebuilding: `docker compose exec web alembic upgrade head`
 
 ### Sync Issues
 
