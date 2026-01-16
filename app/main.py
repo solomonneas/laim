@@ -17,7 +17,7 @@ from sqlalchemy import select, or_, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db, init_db
-from app.models import User, InventoryItem, ItemType, RoomLocation, UserRole
+from app.models import User, InventoryItem, SyncLog, ItemType, RoomLocation, UserRole, SyncStatus
 from app.schemas import (
     UserCreate,
     UserResponse,
@@ -28,7 +28,13 @@ from app.schemas import (
     LoginRequest,
     TokenResponse,
     DashboardStats,
+    SyncTriggerRequest,
+    SyncTriggerResponse,
+    SyncStatusResponse,
+    SyncLogResponse,
 )
+from app.scheduler import start_scheduler, stop_scheduler
+from app.integrations.sync import DeviceSyncService
 from app.auth import (
     get_current_user,
     get_current_user_optional,
@@ -45,9 +51,11 @@ from app.auth import (
 # -----------------------------------------------------------------------------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initialize database on startup."""
+    """Initialize database and scheduler on startup."""
     await init_db()
+    start_scheduler()
     yield
+    stop_scheduler()
 
 
 # -----------------------------------------------------------------------------
@@ -651,3 +659,97 @@ async def import_csv(
         "skipped": skipped,
         "errors": errors
     })
+
+
+# -----------------------------------------------------------------------------
+# Device Sync API Endpoints
+# -----------------------------------------------------------------------------
+@app.post("/api/sync/trigger", response_model=SyncTriggerResponse)
+async def trigger_sync(
+    request: SyncTriggerRequest = SyncTriggerRequest(),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_admin)
+):
+    """
+    Trigger a manual device sync from external systems.
+
+    Args:
+        source: 'all', 'netdisco', or 'librenms'
+
+    Returns:
+        Sync log ID and status for tracking
+    """
+    service = DeviceSyncService(db)
+
+    if request.source == "netdisco":
+        sync_log, result = await service.sync_netdisco_only()
+    elif request.source == "librenms":
+        sync_log, result = await service.sync_librenms_only()
+    else:
+        sync_log, result = await service.sync_all()
+
+    return SyncTriggerResponse(
+        sync_id=sync_log.id,
+        message=f"Sync completed: {result.created} created, {result.updated} updated, {result.skipped} skipped",
+        status=sync_log.status.value
+    )
+
+
+@app.get("/api/sync/status/{sync_id}", response_model=SyncStatusResponse)
+async def get_sync_status(
+    sync_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """
+    Get the status of a sync operation.
+
+    Args:
+        sync_id: ID of the sync log entry
+
+    Returns:
+        Current sync status and statistics
+    """
+    result = await db.execute(
+        select(SyncLog).where(SyncLog.id == sync_id)
+    )
+    sync_log = result.scalar_one_or_none()
+
+    if not sync_log:
+        raise HTTPException(status_code=404, detail="Sync log not found")
+
+    return SyncStatusResponse(
+        id=sync_log.id,
+        started_at=sync_log.started_at,
+        completed_at=sync_log.completed_at,
+        source=sync_log.source,
+        status=sync_log.status,
+        devices_found=sync_log.devices_found,
+        created=sync_log.created,
+        updated=sync_log.updated,
+        skipped=sync_log.skipped,
+        errors=sync_log.errors
+    )
+
+
+@app.get("/api/sync/history", response_model=list[SyncLogResponse])
+async def get_sync_history(
+    limit: int = Query(20, ge=1, le=100, description="Number of records to return"),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """
+    Get sync history.
+
+    Args:
+        limit: Maximum number of records to return (default: 20)
+
+    Returns:
+        List of recent sync log entries
+    """
+    result = await db.execute(
+        select(SyncLog)
+        .order_by(desc(SyncLog.started_at))
+        .limit(limit)
+    )
+    return result.scalars().all()

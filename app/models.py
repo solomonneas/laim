@@ -14,8 +14,10 @@ from sqlalchemy import (
     Boolean,
     ForeignKey,
     Index,
+    JSON,
 )
 from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.sql import func
 
 Base = declarative_base()
 
@@ -42,6 +44,13 @@ class UserRole(enum.Enum):
     """User role enumeration for RBAC."""
     SUPERUSER = "superuser"
     ADMIN = "admin"
+
+
+class SyncStatus(enum.Enum):
+    """Sync job status enumeration."""
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
 
 
 # -----------------------------------------------------------------------------
@@ -106,6 +115,15 @@ class InventoryItem(Base):
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
 
+    # Sync/source tracking fields
+    source = Column(String(50), nullable=True)  # 'manual', 'netdisco', 'librenms', 'merged'
+    source_id = Column(String(255), nullable=True)  # External system ID
+    last_synced_at = Column(DateTime(timezone=True), nullable=True)
+    firmware_version = Column(String(100), nullable=True)
+    ip_address = Column(String(45), nullable=True)  # IPv4 or IPv6
+    model = Column(String(255), nullable=True)
+    vendor = Column(String(255), nullable=True)
+
     # Relationships
     created_by_user = relationship(
         "User",
@@ -142,4 +160,48 @@ class InventoryItem(Base):
             "is_active": self.is_active,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "source": self.source,
+            "source_id": self.source_id,
+            "last_synced_at": self.last_synced_at.isoformat() if self.last_synced_at else None,
+            "firmware_version": self.firmware_version,
+            "ip_address": self.ip_address,
+            "model": self.model,
+            "vendor": self.vendor,
+        }
+
+
+# -----------------------------------------------------------------------------
+# Sync Log Model
+# -----------------------------------------------------------------------------
+class SyncLog(Base):
+    """Sync job history model for tracking API sync operations."""
+    __tablename__ = "sync_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    started_at = Column(DateTime(timezone=True), default=func.now(), nullable=False)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    source = Column(String(50), nullable=False)  # 'netdisco', 'librenms', 'all'
+    status = Column(SQLEnum(SyncStatus), nullable=False, default=SyncStatus.RUNNING)
+    devices_found = Column(Integer, default=0)
+    created = Column(Integer, default=0)
+    updated = Column(Integer, default=0)
+    skipped = Column(Integer, default=0)
+    errors = Column(JSON, nullable=True)
+
+    def __repr__(self):
+        return f"<SyncLog(id={self.id}, source='{self.source}', status='{self.status.value}')>"
+
+    def to_dict(self):
+        """Convert model to dictionary for JSON serialization."""
+        return {
+            "id": self.id,
+            "started_at": self.started_at.isoformat() if self.started_at else None,
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "source": self.source,
+            "status": self.status.value,
+            "devices_found": self.devices_found,
+            "created": self.created,
+            "updated": self.updated,
+            "skipped": self.skipped,
+            "errors": self.errors,
         }
