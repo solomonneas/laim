@@ -260,7 +260,31 @@ class DeviceSyncService:
             result: SyncResult to update with counts
         """
         try:
-            existing = await self._find_existing_item(device)
+            # Generate serial from available identifiers if not present
+            serial = None
+            if device.serial_number and device.serial_number.strip():
+                serial = device.serial_number.strip()
+            elif device.mac_address and device.mac_address.strip():
+                serial = f"MAC-{device.mac_address.strip().replace(':', '')}"
+            elif device.hostname and device.hostname.strip():
+                serial = f"HOST-{device.hostname.strip()}"
+            elif device.ip_address and device.ip_address.strip():
+                serial = f"IP-{device.ip_address.strip()}"
+
+            if not serial:
+                result.skipped += 1
+                logger.debug(f"Skipped device without identifiers: {device.hostname or device.ip_address}")
+                return
+
+            # Check for existing item by generated serial first
+            existing_query = await self.db.execute(
+                select(InventoryItem).where(InventoryItem.serial_number == serial)
+            )
+            existing = existing_query.scalar_one_or_none()
+
+            # If not found by serial, try other identifiers
+            if not existing:
+                existing = await self._find_existing_item(device)
 
             if existing:
                 # Update existing item
@@ -274,6 +298,8 @@ class DeviceSyncService:
                     existing.vendor = device.vendor
                 if device.firmware_version:
                     existing.firmware_version = device.firmware_version
+                if device.mac_address and not existing.mac_address:
+                    existing.mac_address = device.mac_address
                 # Update sync tracking
                 existing.source = device.source
                 existing.source_id = device.source_id
@@ -281,22 +307,6 @@ class DeviceSyncService:
                 result.updated += 1
                 logger.debug(f"Updated device: {device.hostname or device.ip_address}")
             else:
-                # Generate serial from available identifiers if not present
-                serial = None
-                if device.serial_number and device.serial_number.strip():
-                    serial = device.serial_number.strip()
-                elif device.mac_address and device.mac_address.strip():
-                    serial = f"MAC-{device.mac_address.strip().replace(':', '')}"
-                elif device.hostname and device.hostname.strip():
-                    serial = f"HOST-{device.hostname.strip()}"
-                elif device.ip_address and device.ip_address.strip():
-                    serial = f"IP-{device.ip_address.strip()}"
-
-                if not serial:
-                    result.skipped += 1
-                    logger.debug(f"Skipped device without identifiers: {device.hostname or device.ip_address}")
-                    return
-
                 # Create new item
                 item = InventoryItem(
                     hostname=device.hostname or device.ip_address or "Unknown",
@@ -317,7 +327,11 @@ class DeviceSyncService:
                 result.created += 1
                 logger.debug(f"Created device: {device.hostname or device.ip_address}")
 
+            # Flush after each device to catch duplicates early
+            await self.db.flush()
+
         except Exception as e:
+            await self.db.rollback()
             error_msg = f"Error processing {device.hostname or device.ip_address}: {str(e)}"
             result.errors.append(error_msg)
             logger.error(error_msg)
