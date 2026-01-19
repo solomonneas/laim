@@ -281,16 +281,26 @@ class DeviceSyncService:
                 result.updated += 1
                 logger.debug(f"Updated device: {device.hostname or device.ip_address}")
             else:
-                # Skip if no serial number (required field)
-                if not device.serial_number or not device.serial_number.strip():
+                # Generate serial from available identifiers if not present
+                serial = None
+                if device.serial_number and device.serial_number.strip():
+                    serial = device.serial_number.strip()
+                elif device.mac_address and device.mac_address.strip():
+                    serial = f"MAC-{device.mac_address.strip().replace(':', '')}"
+                elif device.hostname and device.hostname.strip():
+                    serial = f"HOST-{device.hostname.strip()}"
+                elif device.ip_address and device.ip_address.strip():
+                    serial = f"IP-{device.ip_address.strip()}"
+
+                if not serial:
                     result.skipped += 1
-                    logger.debug(f"Skipped device without serial: {device.hostname or device.ip_address}")
+                    logger.debug(f"Skipped device without identifiers: {device.hostname or device.ip_address}")
                     return
 
                 # Create new item
                 item = InventoryItem(
                     hostname=device.hostname or device.ip_address or "Unknown",
-                    serial_number=device.serial_number.strip(),
+                    serial_number=serial,
                     mac_address=device.mac_address,
                     asset_tag=generate_asset_tag(),
                     item_type=detect_item_type(device.model, device.vendor, device.hostname),
