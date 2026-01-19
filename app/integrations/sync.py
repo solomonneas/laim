@@ -28,8 +28,9 @@ TYPE_PATTERNS: dict[ItemType, list[str]] = {
         "router", "isr", "asr", "cisco router", "juniper router",
         "mikrotik router", "edgerouter", "routeros", "vyos",
         "pfsense", "opnsense", "fortigate", "srx", "udm", "usg",
-        "dream machine", "security gateway", "firewall", "sonicwall",
+        "dream machine", "security gateway", "sonicwall",
         "asa", "fortinet", "sophos", "watchguard", "netgate",
+        "pa-", "palo alto", "pa-3", "pa-4", "pa-5", "pa-7",
     ],
     ItemType.SWITCH: [
         "switch", "catalyst", "nexus", "arista", "juniper switch",
@@ -37,7 +38,8 @@ TYPE_PATTERNS: dict[ItemType, list[str]] = {
         "edgeswitch", "unifi switch", "usw-", "usw ", "meraki ms",
         "brocade", "icx", "fas", "s4048", "s5048", "z9100",
         "us-", "us-8", "us-16", "us-24", "us-48", "usl-",
-        "cisco sg", "sg300", "sg500", "cisco ws-",
+        "cisco sg", "sg300", "sg500", "ws-c", "ws-c4506", "ws-c3",
+        "ws-c2", "c9300", "c9200", "c3850", "c3750", "c2960",
     ],
     ItemType.WAP: [
         "wap", "wireless", "wifi", "access point", "aruba ap",
