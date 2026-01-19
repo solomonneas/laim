@@ -311,12 +311,15 @@ class DeviceSyncService:
                     existing.firmware_version = device.firmware_version
                 if device.mac_address and not existing.mac_address:
                     existing.mac_address = device.mac_address
+                # Re-detect and update item type
+                detected_type = detect_item_type(device.model, device.vendor, device.hostname)
+                existing.item_type = detected_type
                 # Update sync tracking
                 existing.source = device.source
                 existing.source_id = device.source_id
                 existing.last_synced_at = datetime.now(timezone.utc)
                 result.updated += 1
-                logger.debug(f"Updated device: {device.hostname or device.ip_address}")
+                logger.debug(f"Updated device: {device.hostname or device.ip_address} (type: {detected_type.value})")
             else:
                 # Create new item
                 item = InventoryItem(
