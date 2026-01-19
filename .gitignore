@@ -61,3 +61,13 @@ logs/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Claude / AI
+.claude/
+CLAUDE.md
+claude.md
+
+# Planning
+plan.md
+plans/
+TODO.md
