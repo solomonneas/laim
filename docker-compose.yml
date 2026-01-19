@@ -51,6 +51,19 @@ services:
       SUPERUSER_USERNAME: ${SUPERUSER_USERNAME:-superadmin}
       SUPERUSER_PASSWORD: ${SUPERUSER_PASSWORD:-SuperAdmin123!}
       SUPERUSER_EMAIL: ${SUPERUSER_EMAIL:-admin@laim.local}
+
+      # LibreNMS Integration
+      LIBRENMS_API_URL: ${LIBRENMS_API_URL:-}
+      LIBRENMS_API_TOKEN: ${LIBRENMS_API_TOKEN:-}
+
+      # NetDisco Integration
+      NETDISCO_API_URL: ${NETDISCO_API_URL:-}
+      NETDISCO_USERNAME: ${NETDISCO_USERNAME:-}
+      NETDISCO_PASSWORD: ${NETDISCO_PASSWORD:-}
+
+      # Sync Settings
+      SYNC_ENABLED: ${SYNC_ENABLED:-true}
+      SYNC_INTERVAL_HOURS: ${SYNC_INTERVAL_HOURS:-6}
     volumes:
       - ./app:/app/app:ro
       - ./templates:/app/templates:ro
