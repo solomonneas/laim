@@ -1,0 +1,82 @@
+#===============================================================================
+# LAIM - Lab Asset Inventory Manager
+# Docker Compose Orchestration
+#===============================================================================
+
+services:
+  #-----------------------------------------------------------------------------
+  # PostgreSQL Database
+  #-----------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: laim-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-laim}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-laim_secure_password}
+      POSTGRES_DB: ${POSTGRES_DB:-laim}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-laim} -d ${POSTGRES_DB:-laim}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - laim-network
+
+  #-----------------------------------------------------------------------------
+  # FastAPI Web Application
+  #-----------------------------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laim-web
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      # Database Configuration
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-laim}:${POSTGRES_PASSWORD:-laim_secure_password}@db:5432/${POSTGRES_DB:-laim}
+      DATABASE_URL_SYNC: postgresql://${POSTGRES_USER:-laim}:${POSTGRES_PASSWORD:-laim_secure_password}@db:5432/${POSTGRES_DB:-laim}
+
+      # Application Settings
+      APP_NAME: ${APP_NAME:-LAIM}
+      APP_ENV: ${APP_ENV:-production}
+      SECRET_KEY: ${SECRET_KEY:-change-this-to-a-secure-random-string}
+
+      # Superuser Credentials (used by seed script)
+      SUPERUSER_USERNAME: ${SUPERUSER_USERNAME:-superadmin}
+      SUPERUSER_PASSWORD: ${SUPERUSER_PASSWORD:-SuperAdmin123!}
+      SUPERUSER_EMAIL: ${SUPERUSER_EMAIL:-admin@laim.local}
+    volumes:
+      - ./app:/app/app:ro
+      - ./templates:/app/templates:ro
+      - ./static:/app/static:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - laim-network
+
+#-------------------------------------------------------------------------------
+# Volumes
+#-------------------------------------------------------------------------------
+volumes:
+  postgres_data:
+    driver: local
+
+#-------------------------------------------------------------------------------
+# Networks
+#-------------------------------------------------------------------------------
+networks:
+  laim-network:
+    driver: bridge

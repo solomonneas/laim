@@ -1,0 +1,6 @@
+hostname,serial_number,mac_address,asset_tag,item_type,room_location,sub_location,notes
+LAB-LAPTOP-001,SN-LP-001,00:1A:2B:3C:4D:01,AST-2024-0001,Laptop,2265,Desk 1,Dell Latitude 5540
+LAB-DESKTOP-001,SN-DT-001,00:1A:2B:3C:4D:02,AST-2024-0002,Desktop,2265,Desk 2,HP ProDesk 400
+LAB-SERVER-001,SN-SV-001,00:1A:2B:3C:4D:03,AST-2024-0003,Server,2266,Rack 1 U1-U4,Dell PowerEdge R750
+LAB-WAP-001,SN-WP-001,00:1A:2B:3C:4D:04,AST-2024-0004,WAP,2265,Ceiling Mount A,Cisco Catalyst 9120AX
+LAB-TV-001,SN-TV-001,00:1A:2B:3C:4D:05,AST-2024-0005,Smart TV,2265,Wall Mount Front,Samsung 65 inch

@@ -1,0 +1,856 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - LAIM{% endblock %}
+
+{% block body %}
+<div class="min-h-full flex flex-col">
+    <!-- Header -->
+    <header class="bg-slate-850 border-b border-slate-700/50 sticky top-0 z-40">
+        <div class="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center gap-3">
+                    <div class="h-9 w-9 flex items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400">
+                        <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                        </svg>
+                    </div>
+                    <h1 class="text-lg font-bold font-display text-white">LAIM</h1>
+                </div>
+
+                <!-- User Menu -->
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-slate-400">
+                        {{ user.username }}
+                        <span class="ml-1 px-2 py-0.5 text-xs font-medium rounded-full
+                            {% if user.role.value == 'superuser' %}bg-amber-500/20 text-amber-400
+                            {% else %}bg-blue-500/20 text-blue-400{% endif %}">
+                            {{ user.role.value }}
+                        </span>
+                    </span>
+                    <a href="/logout" class="text-sm text-slate-400 hover:text-white transition-smooth">
+                        Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 py-6">
+        <div class="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
+                <!-- Total -->
+                <div class="bg-slate-850 rounded-xl border border-slate-700/50 p-4">
+                    <div class="text-2xl font-bold font-display text-white tabular-nums">{{ stats.total }}</div>
+                    <div class="text-xs text-slate-400 mt-1">Total Items</div>
+                </div>
+                <!-- By Type -->
+                {% for type_name, count in stats.by_type.items() %}
+                <div class="bg-slate-850 rounded-xl border border-slate-700/50 p-4 cursor-pointer hover:border-blue-500/50 transition-smooth type-stat" data-type="{{ type_name }}">
+                    <div class="text-2xl font-bold font-display text-white tabular-nums">{{ count }}</div>
+                    <div class="text-xs text-slate-400 mt-1">{{ type_name }}{% if count != 1 %}s{% endif %}</div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Controls Bar -->
+            <div class="bg-slate-850 rounded-xl border border-slate-700/50 p-4 mb-6">
+                <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+                    <!-- Search -->
+                    <div class="relative flex-1 max-w-md w-full">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <input
+                            type="text"
+                            id="search-input"
+                            placeholder="Search hostname, serial, MAC, asset tag..."
+                            class="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth font-mono text-sm"
+                        >
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="flex flex-wrap items-center gap-3">
+                        <!-- Type Filter -->
+                        <select id="type-filter" class="px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth">
+                            <option value="">All Types</option>
+                            {% for type_name in item_types %}
+                            <option value="{{ type_name }}">{{ type_name }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <!-- Room Filter -->
+                        <select id="room-filter" class="px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth">
+                            <option value="">All Rooms</option>
+                            {% for room in room_locations %}
+                            <option value="{{ room }}">Room {{ room }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <!-- Import CSV Button -->
+                        <button
+                            id="import-csv-btn"
+                            class="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-sm font-semibold rounded-lg shadow-lg shadow-emerald-500/25 transition-smooth"
+                        >
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            Import CSV
+                        </button>
+
+                        <!-- Add Button -->
+                        <button
+                            id="add-item-btn"
+                            class="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-sm font-semibold rounded-lg shadow-lg shadow-blue-500/25 transition-smooth"
+                        >
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Add Item
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="bg-slate-850 rounded-xl border border-slate-700/50 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-slate-900/50 border-b border-slate-700/50">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Hostname</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Type</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Serial Number</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">MAC Address</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Asset Tag</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Room</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Location</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="items-table-body" class="divide-y divide-slate-700/50">
+                            {% for item in items %}
+                            <tr class="table-row-hover transition-smooth" data-id="{{ item.id }}">
+                                <td class="px-4 py-3 font-mono text-sm text-cyan-400 tabular-nums">{{ item.hostname }}</td>
+                                <td class="px-4 py-3">
+                                    <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md
+                                        {% if item.item_type.value == 'Laptop' %}bg-purple-500/20 text-purple-400
+                                        {% elif item.item_type.value == 'Desktop' %}bg-blue-500/20 text-blue-400
+                                        {% elif item.item_type.value == 'Server' %}bg-emerald-500/20 text-emerald-400
+                                        {% elif item.item_type.value == 'WAP' %}bg-amber-500/20 text-amber-400
+                                        {% else %}bg-pink-500/20 text-pink-400{% endif %}">
+                                        {{ item.item_type.value }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 font-mono text-sm text-slate-300 tabular-nums">{{ item.serial_number }}</td>
+                                <td class="px-4 py-3 font-mono text-sm text-slate-300 tabular-nums">{{ item.mac_address or '-' }}</td>
+                                <td class="px-4 py-3 font-mono text-sm text-slate-300 tabular-nums">{{ item.asset_tag }}</td>
+                                <td class="px-4 py-3 text-sm text-slate-300">{{ item.room_location.value }}</td>
+                                <td class="px-4 py-3 text-sm text-slate-400">{{ item.sub_location or '-' }}</td>
+                                <td class="px-4 py-3 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <button class="edit-btn p-1.5 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded transition-smooth" title="Edit">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            </svg>
+                                        </button>
+                                        <button class="delete-btn p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-smooth" title="Delete">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="hidden py-12 text-center">
+                    <svg class="mx-auto h-12 w-12 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                    </svg>
+                    <p class="mt-4 text-slate-400">No items found</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-6 border-t border-slate-700/50">
+        <div class="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center text-xs text-slate-500">
+                <p class="mb-2">Lab Asset Inventory Manager v1.0</p>
+                <a href="https://github.com/solomonneas" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-slate-400 hover:text-slate-300 transition-smooth">
+                    <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>solomonneas</span>
+                </a>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<!-- Add/Edit Modal -->
+<div id="item-modal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-backdrop absolute inset-0" id="modal-backdrop"></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+        <div class="relative bg-slate-850 rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <!-- Modal Header -->
+            <div class="sticky top-0 bg-slate-850 px-6 py-4 border-b border-slate-700/50 flex items-center justify-between">
+                <h2 id="modal-title" class="text-lg font-bold font-display text-white">Add Item</h2>
+                <button id="close-modal" class="p-1 text-slate-400 hover:text-white transition-smooth">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Form -->
+            <form id="item-form" class="p-6 space-y-4">
+                <input type="hidden" id="item-id" name="id">
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1">Hostname *</label>
+                    <input type="text" id="hostname" name="hostname" required
+                        class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth"
+                        placeholder="LAB-LAPTOP-001">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Item Type *</label>
+                        <select id="item_type" name="item_type" required
+                            class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth">
+                            {% for type_name in item_types %}
+                            <option value="{{ type_name }}">{{ type_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Room *</label>
+                        <select id="room_location" name="room_location" required
+                            class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth">
+                            {% for room in room_locations %}
+                            <option value="{{ room }}">Room {{ room }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1">Serial Number *</label>
+                    <input type="text" id="serial_number" name="serial_number" required
+                        class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth tabular-nums"
+                        placeholder="SN-12345678">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1">MAC Address</label>
+                    <input type="text" id="mac_address" name="mac_address"
+                        class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth tabular-nums"
+                        placeholder="00:1A:2B:3C:4D:5E">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1">Asset Tag *</label>
+                    <input type="text" id="asset_tag" name="asset_tag" required
+                        class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth tabular-nums"
+                        placeholder="AST-2024-0001">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1">Sub-location</label>
+                    <input type="text" id="sub_location" name="sub_location"
+                        class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth"
+                        placeholder="Rack 1, Shelf B, Desk 3">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1">Notes</label>
+                    <textarea id="notes" name="notes" rows="2"
+                        class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth resize-none"
+                        placeholder="Additional notes..."></textarea>
+                </div>
+
+                <!-- Error Message -->
+                <div id="form-error" class="hidden p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm"></div>
+
+                <!-- Submit Button -->
+                <div class="pt-2">
+                    <button type="submit"
+                        class="w-full py-2.5 px-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold rounded-lg shadow-lg shadow-blue-500/25 transition-smooth">
+                        <span id="submit-text">Add Item</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-backdrop absolute inset-0" id="delete-backdrop"></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+        <div class="relative bg-slate-850 rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-sm p-6">
+            <div class="text-center">
+                <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-red-500/10 text-red-400">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </div>
+                <h3 class="mt-4 text-lg font-bold text-white">Delete Item</h3>
+                <p class="mt-2 text-sm text-slate-400">Are you sure you want to delete this item? This action cannot be undone.</p>
+            </div>
+            <div class="mt-6 flex gap-3">
+                <button id="cancel-delete" class="flex-1 py-2 px-4 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition-smooth">
+                    Cancel
+                </button>
+                <button id="confirm-delete" class="flex-1 py-2 px-4 bg-red-600 hover:bg-red-500 text-white font-medium rounded-lg transition-smooth">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSV Import Modal -->
+<div id="csv-import-modal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-backdrop absolute inset-0" id="csv-backdrop"></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+        <div class="relative bg-slate-850 rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-2xl p-6">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-lg font-bold font-display text-white">Import CSV</h2>
+                    <p class="text-sm text-slate-400 mt-1">Upload a CSV file to bulk import inventory items</p>
+                </div>
+                <button id="close-csv-modal" class="p-1 text-slate-400 hover:text-white transition-smooth">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- CSV Format Info -->
+            <div class="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <h3 class="text-sm font-semibold text-blue-400 mb-2">Required CSV Columns:</h3>
+                <p class="text-xs text-slate-300 font-mono">hostname, serial_number, asset_tag, item_type, room_location</p>
+                <h3 class="text-sm font-semibold text-blue-400 mt-3 mb-2">Optional Columns:</h3>
+                <p class="text-xs text-slate-300 font-mono">mac_address, sub_location, notes</p>
+                <h3 class="text-sm font-semibold text-blue-400 mt-3 mb-2">Valid Values:</h3>
+                <ul class="text-xs text-slate-300 space-y-1">
+                    <li><span class="font-mono">item_type:</span> Laptop, Desktop, Smart TV, Server, WAP</li>
+                    <li><span class="font-mono">room_location:</span> 2265, 2266</li>
+                </ul>
+            </div>
+
+            <!-- File Upload -->
+            <div class="mb-6">
+                <input type="file" id="csv-file-input" accept=".csv" class="hidden">
+                <button id="select-csv-btn" class="w-full flex items-center justify-center gap-3 px-4 py-8 border-2 border-dashed border-slate-600 hover:border-emerald-500 rounded-lg transition-smooth group">
+                    <svg class="h-8 w-8 text-slate-500 group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    <div>
+                        <p class="text-sm font-semibold text-white group-hover:text-emerald-400"><span id="csv-file-name">Click to select CSV file</span></p>
+                        <p class="text-xs text-slate-400">or drag and drop</p>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Progress Bar -->
+            <div id="csv-progress" class="hidden mb-6">
+                <div class="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+                    <div id="csv-progress-bar" class="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p id="csv-progress-text" class="text-sm text-slate-400 mt-2 text-center">Processing...</p>
+            </div>
+
+            <!-- Results -->
+            <div id="csv-results" class="hidden mb-6 p-4 rounded-lg border">
+                <h3 class="text-sm font-semibold text-white mb-3">Import Results</h3>
+                <div class="grid grid-cols-3 gap-4 mb-3">
+                    <div class="text-center">
+                        <div id="csv-total" class="text-2xl font-bold text-white">0</div>
+                        <div class="text-xs text-slate-400">Total Rows</div>
+                    </div>
+                    <div class="text-center">
+                        <div id="csv-created" class="text-2xl font-bold text-emerald-400">0</div>
+                        <div class="text-xs text-slate-400">Created</div>
+                    </div>
+                    <div class="text-center">
+                        <div id="csv-skipped" class="text-2xl font-bold text-yellow-400">0</div>
+                        <div class="text-xs text-slate-400">Skipped</div>
+                    </div>
+                </div>
+                <div id="csv-errors-container" class="hidden">
+                    <div class="text-xs font-semibold text-red-400 mb-2">Errors:</div>
+                    <div id="csv-errors" class="text-xs text-red-300 space-y-1 max-h-32 overflow-y-auto"></div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-3">
+                <button id="cancel-csv" class="flex-1 py-2.5 px-4 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition-smooth">
+                    Cancel
+                </button>
+                <button id="upload-csv-btn" class="flex-1 py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-semibold rounded-lg shadow-lg shadow-emerald-500/25 transition-smooth disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    Upload & Import
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // State
+    let currentEditId = null;
+    let currentDeleteId = null;
+    let debounceTimer = null;
+
+    // DOM Elements
+    const searchInput = document.getElementById('search-input');
+    const typeFilter = document.getElementById('type-filter');
+    const roomFilter = document.getElementById('room-filter');
+    const tableBody = document.getElementById('items-table-body');
+    const emptyState = document.getElementById('empty-state');
+
+    const itemModal = document.getElementById('item-modal');
+    const modalBackdrop = document.getElementById('modal-backdrop');
+    const modalTitle = document.getElementById('modal-title');
+    const itemForm = document.getElementById('item-form');
+    const submitText = document.getElementById('submit-text');
+    const formError = document.getElementById('form-error');
+    const closeModalBtn = document.getElementById('close-modal');
+    const addItemBtn = document.getElementById('add-item-btn');
+
+    const deleteModal = document.getElementById('delete-modal');
+    const deleteBackdrop = document.getElementById('delete-backdrop');
+    const cancelDeleteBtn = document.getElementById('cancel-delete');
+    const confirmDeleteBtn = document.getElementById('confirm-delete');
+
+    // Type badge colors
+    const typeBadgeClasses = {
+        'Laptop': 'bg-purple-500/20 text-purple-400',
+        'Desktop': 'bg-blue-500/20 text-blue-400',
+        'Server': 'bg-emerald-500/20 text-emerald-400',
+        'WAP': 'bg-amber-500/20 text-amber-400',
+        'Smart TV': 'bg-pink-500/20 text-pink-400'
+    };
+
+    // Fetch and render items
+    async function fetchItems() {
+        const search = searchInput.value;
+        const type = typeFilter.value;
+        const room = roomFilter.value;
+
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        if (type) params.append('item_type', type);
+        if (room) params.append('room', room);
+
+        try {
+            const response = await fetch(`/api/items?${params}`);
+            if (!response.ok) throw new Error('Failed to fetch items');
+            const items = await response.json();
+            renderItems(items);
+        } catch (error) {
+            console.error('Error fetching items:', error);
+        }
+    }
+
+    // Render items to table
+    function renderItems(items) {
+        if (items.length === 0) {
+            tableBody.innerHTML = '';
+            emptyState.classList.remove('hidden');
+            return;
+        }
+
+        emptyState.classList.add('hidden');
+        tableBody.innerHTML = items.map(item => `
+            <tr class="table-row-hover transition-smooth" data-id="${item.id}">
+                <td class="px-4 py-3 font-mono text-sm text-cyan-400 tabular-nums">${escapeHtml(item.hostname)}</td>
+                <td class="px-4 py-3">
+                    <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md ${typeBadgeClasses[item.item_type] || 'bg-slate-500/20 text-slate-400'}">
+                        ${escapeHtml(item.item_type)}
+                    </span>
+                </td>
+                <td class="px-4 py-3 font-mono text-sm text-slate-300 tabular-nums">${escapeHtml(item.serial_number)}</td>
+                <td class="px-4 py-3 font-mono text-sm text-slate-300 tabular-nums">${item.mac_address ? escapeHtml(item.mac_address) : '-'}</td>
+                <td class="px-4 py-3 font-mono text-sm text-slate-300 tabular-nums">${escapeHtml(item.asset_tag)}</td>
+                <td class="px-4 py-3 text-sm text-slate-300">${escapeHtml(item.room_location)}</td>
+                <td class="px-4 py-3 text-sm text-slate-400">${item.sub_location ? escapeHtml(item.sub_location) : '-'}</td>
+                <td class="px-4 py-3 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                        <button class="edit-btn p-1.5 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded transition-smooth" title="Edit">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                        </button>
+                        <button class="delete-btn p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-smooth" title="Delete">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+
+        attachRowListeners();
+    }
+
+    // Escape HTML for XSS prevention
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Attach event listeners to table rows
+    function attachRowListeners() {
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const row = e.target.closest('tr');
+                const id = row.dataset.id;
+                openEditModal(id);
+            });
+        });
+
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const row = e.target.closest('tr');
+                const id = row.dataset.id;
+                openDeleteModal(id);
+            });
+        });
+    }
+
+    // Open modal for adding
+    function openAddModal() {
+        currentEditId = null;
+        modalTitle.textContent = 'Add Item';
+        submitText.textContent = 'Add Item';
+        itemForm.reset();
+        formError.classList.add('hidden');
+        itemModal.classList.remove('hidden');
+    }
+
+    // Open modal for editing
+    async function openEditModal(id) {
+        currentEditId = id;
+        modalTitle.textContent = 'Edit Item';
+        submitText.textContent = 'Save Changes';
+        formError.classList.add('hidden');
+
+        try {
+            const response = await fetch(`/api/items/${id}`);
+            if (!response.ok) throw new Error('Failed to fetch item');
+            const item = await response.json();
+
+            document.getElementById('item-id').value = item.id;
+            document.getElementById('hostname').value = item.hostname;
+            document.getElementById('item_type').value = item.item_type;
+            document.getElementById('room_location').value = item.room_location;
+            document.getElementById('serial_number').value = item.serial_number;
+            document.getElementById('mac_address').value = item.mac_address || '';
+            document.getElementById('asset_tag').value = item.asset_tag;
+            document.getElementById('sub_location').value = item.sub_location || '';
+            document.getElementById('notes').value = item.notes || '';
+
+            itemModal.classList.remove('hidden');
+        } catch (error) {
+            console.error('Error fetching item:', error);
+        }
+    }
+
+    // Close item modal
+    function closeItemModal() {
+        itemModal.classList.add('hidden');
+        currentEditId = null;
+    }
+
+    // Open delete confirmation
+    function openDeleteModal(id) {
+        currentDeleteId = id;
+        deleteModal.classList.remove('hidden');
+    }
+
+    // Close delete modal
+    function closeDeleteModal() {
+        deleteModal.classList.add('hidden');
+        currentDeleteId = null;
+    }
+
+    // Handle form submission
+    async function handleFormSubmit(e) {
+        e.preventDefault();
+        formError.classList.add('hidden');
+
+        const formData = {
+            hostname: document.getElementById('hostname').value,
+            item_type: document.getElementById('item_type').value,
+            room_location: document.getElementById('room_location').value,
+            serial_number: document.getElementById('serial_number').value,
+            mac_address: document.getElementById('mac_address').value || null,
+            asset_tag: document.getElementById('asset_tag').value,
+            sub_location: document.getElementById('sub_location').value || null,
+            notes: document.getElementById('notes').value || null
+        };
+
+        const url = currentEditId ? `/api/items/${currentEditId}` : '/api/items';
+        const method = currentEditId ? 'PUT' : 'POST';
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to save item');
+            }
+
+            closeItemModal();
+            fetchItems();
+        } catch (error) {
+            formError.textContent = error.message;
+            formError.classList.remove('hidden');
+        }
+    }
+
+    // Handle delete confirmation
+    async function handleDelete() {
+        if (!currentDeleteId) return;
+
+        try {
+            const response = await fetch(`/api/items/${currentDeleteId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) throw new Error('Failed to delete item');
+
+            closeDeleteModal();
+            fetchItems();
+        } catch (error) {
+            console.error('Error deleting item:', error);
+        }
+    }
+
+    // Debounced search
+    function debouncedSearch() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(fetchItems, 150);
+    }
+
+    // Event Listeners
+    searchInput.addEventListener('input', debouncedSearch);
+    typeFilter.addEventListener('change', fetchItems);
+    roomFilter.addEventListener('change', fetchItems);
+
+    addItemBtn.addEventListener('click', openAddModal);
+    closeModalBtn.addEventListener('click', closeItemModal);
+    modalBackdrop.addEventListener('click', closeItemModal);
+    itemForm.addEventListener('submit', handleFormSubmit);
+
+    cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+    deleteBackdrop.addEventListener('click', closeDeleteModal);
+    confirmDeleteBtn.addEventListener('click', handleDelete);
+
+    // Type stat card click to filter
+    document.querySelectorAll('.type-stat').forEach(card => {
+        card.addEventListener('click', () => {
+            const type = card.dataset.type;
+            typeFilter.value = type;
+            fetchItems();
+        });
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeItemModal();
+            closeDeleteModal();
+            closeCsvModal();
+        }
+        // Ctrl/Cmd + K for search focus
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            searchInput.focus();
+        }
+    });
+
+    // Initial table row listeners
+    attachRowListeners();
+
+    // -------------------------------------------------------------------------
+    // CSV Import Functionality
+    // -------------------------------------------------------------------------
+    const csvImportModal = document.getElementById('csv-import-modal');
+    const csvBackdrop = document.getElementById('csv-backdrop');
+    const importCsvBtn = document.getElementById('import-csv-btn');
+    const closeCsvModalBtn = document.getElementById('close-csv-modal');
+    const cancelCsvBtn = document.getElementById('cancel-csv');
+    const selectCsvBtn = document.getElementById('select-csv-btn');
+    const csvFileInput = document.getElementById('csv-file-input');
+    const csvFileName = document.getElementById('csv-file-name');
+    const uploadCsvBtn = document.getElementById('upload-csv-btn');
+    const csvProgress = document.getElementById('csv-progress');
+    const csvProgressBar = document.getElementById('csv-progress-bar');
+    const csvProgressText = document.getElementById('csv-progress-text');
+    const csvResults = document.getElementById('csv-results');
+    const csvTotal = document.getElementById('csv-total');
+    const csvCreated = document.getElementById('csv-created');
+    const csvSkipped = document.getElementById('csv-skipped');
+    const csvErrors = document.getElementById('csv-errors');
+    const csvErrorsContainer = document.getElementById('csv-errors-container');
+
+    let selectedFile = null;
+
+    function openCsvModal() {
+        csvImportModal.classList.remove('hidden');
+        resetCsvModal();
+    }
+
+    function closeCsvModal() {
+        csvImportModal.classList.add('hidden');
+        resetCsvModal();
+    }
+
+    function resetCsvModal() {
+        selectedFile = null;
+        csvFileInput.value = '';
+        csvFileName.textContent = 'Click to select CSV file';
+        uploadCsvBtn.disabled = true;
+        csvProgress.classList.add('hidden');
+        csvResults.classList.add('hidden');
+        csvErrorsContainer.classList.add('hidden');
+        csvProgressBar.style.width = '0%';
+    }
+
+    importCsvBtn.addEventListener('click', openCsvModal);
+    closeCsvModalBtn.addEventListener('click', closeCsvModal);
+    cancelCsvBtn.addEventListener('click', closeCsvModal);
+    csvBackdrop.addEventListener('click', closeCsvModal);
+
+    selectCsvBtn.addEventListener('click', () => {
+        csvFileInput.click();
+    });
+
+    csvFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (!file.name.endsWith('.csv')) {
+                alert('Please select a CSV file');
+                return;
+            }
+            selectedFile = file;
+            csvFileName.textContent = file.name;
+            uploadCsvBtn.disabled = false;
+        }
+    });
+
+    uploadCsvBtn.addEventListener('click', async () => {
+        if (!selectedFile) return;
+
+        // Show progress
+        csvProgress.classList.remove('hidden');
+        csvResults.classList.add('hidden');
+        uploadCsvBtn.disabled = true;
+        cancelCsvBtn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        try {
+            // Animate progress bar
+            csvProgressBar.style.width = '30%';
+            csvProgressText.textContent = 'Uploading...';
+
+            const response = await fetch('/api/import-csv', {
+                method: 'POST',
+                body: formData
+            });
+
+            csvProgressBar.style.width = '100%';
+            csvProgressText.textContent = 'Processing complete!';
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Import failed');
+            }
+
+            const result = await response.json();
+
+            // Show results
+            setTimeout(() => {
+                csvProgress.classList.add('hidden');
+                csvResults.classList.remove('hidden');
+                csvResults.className = 'mb-6 p-4 rounded-lg border border-emerald-500/50 bg-emerald-500/10';
+
+                csvTotal.textContent = result.total_rows;
+                csvCreated.textContent = result.created;
+                csvSkipped.textContent = result.skipped;
+
+                if (result.errors && result.errors.length > 0) {
+                    csvErrorsContainer.classList.remove('hidden');
+                    csvErrors.innerHTML = result.errors.map(err => `<div>${escapeHtml(err)}</div>`).join('');
+                }
+
+                // Refresh the table
+                fetchItems();
+
+                // Re-enable buttons
+                cancelCsvBtn.disabled = false;
+                cancelCsvBtn.textContent = 'Close';
+            }, 500);
+
+        } catch (error) {
+            csvProgress.classList.add('hidden');
+            csvResults.classList.remove('hidden');
+            csvResults.className = 'mb-6 p-4 rounded-lg border border-red-500/50 bg-red-500/10';
+            csvTotal.textContent = '0';
+            csvCreated.textContent = '0';
+            csvSkipped.textContent = '0';
+            csvErrorsContainer.classList.remove('hidden');
+            csvErrors.innerHTML = `<div>${escapeHtml(error.message)}</div>`;
+            cancelCsvBtn.disabled = false;
+            uploadCsvBtn.disabled = false;
+        }
+    });
+
+    // Drag and drop support
+    selectCsvBtn.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        selectCsvBtn.classList.add('border-emerald-500');
+    });
+
+    selectCsvBtn.addEventListener('dragleave', () => {
+        selectCsvBtn.classList.remove('border-emerald-500');
+    });
+
+    selectCsvBtn.addEventListener('drop', (e) => {
+        e.preventDefault();
+        selectCsvBtn.classList.remove('border-emerald-500');
+        const file = e.dataTransfer.files[0];
+        if (file && file.name.endsWith('.csv')) {
+            selectedFile = file;
+            csvFileName.textContent = file.name;
+            uploadCsvBtn.disabled = false;
+        } else {
+            alert('Please drop a CSV file');
+        }
+    });
+</script>
+{% endblock %}
