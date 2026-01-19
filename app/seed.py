@@ -24,24 +24,6 @@ DEFAULT_USERS = [
         "password": os.getenv("SUPERUSER_PASSWORD", "SuperAdmin123!"),
         "role": UserRole.SUPERUSER,
     },
-    {
-        "username": "admin1",
-        "email": "admin1@laim.local",
-        "password": "Admin123!",
-        "role": UserRole.ADMIN,
-    },
-    {
-        "username": "admin2",
-        "email": "admin2@laim.local",
-        "password": "Admin123!",
-        "role": UserRole.ADMIN,
-    },
-    {
-        "username": "admin3",
-        "email": "admin3@laim.local",
-        "password": "Admin123!",
-        "role": UserRole.ADMIN,
-    },
 ]
 
 

@@ -164,8 +164,8 @@ seed_database() {
     # Wait a bit more for the database to be ready
     sleep 5
 
-    # Run the seed script
-    docker compose exec -T web python -m app.seed --with-samples
+    # Run the seed script (users only, no sample data)
+    docker compose exec -T web python -m app.seed
 
     success "Database seeded"
 }
