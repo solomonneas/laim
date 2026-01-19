@@ -17,7 +17,7 @@ from sqlalchemy import select, or_, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db, init_db
-from app.models import User, InventoryItem, SyncLog, ItemType, RoomLocation, UserRole, SyncStatus
+from app.models import User, InventoryItem, SyncLog, ItemType, UserRole, SyncStatus
 from app.schemas import (
     UserCreate,
     UserResponse,
@@ -182,9 +182,15 @@ async def dashboard(
         count = len([i for i in items if i.item_type == item_type])
         stats["by_type"][item_type.value] = count
 
-    for room in RoomLocation:
-        count = len([i for i in items if i.room_location == room])
-        stats["by_room"][room.value] = count
+    # Count by room (dynamic from actual data)
+    room_counts = {}
+    for item in items:
+        room = item.room_location
+        room_counts[room] = room_counts.get(room, 0) + 1
+    stats["by_room"] = room_counts
+
+    # Get unique room locations from data
+    room_locations = sorted(set(i.room_location for i in items))
 
     return templates.TemplateResponse(
         "dashboard.html",
@@ -194,7 +200,7 @@ async def dashboard(
             "items": items,
             "stats": stats,
             "item_types": [t.value for t in ItemType],
-            "room_locations": [r.value for r in RoomLocation],
+            "room_locations": room_locations,
         }
     )
 
@@ -228,11 +234,7 @@ async def list_items(
 
     # Apply room filter
     if room:
-        try:
-            room_enum = RoomLocation(room)
-            query = query.where(InventoryItem.room_location == room_enum)
-        except ValueError:
-            pass
+        query = query.where(InventoryItem.room_location == room)
 
     # Apply search filter
     if search:
@@ -492,16 +494,13 @@ async def get_stats(
         )
         by_type[item_type.value] = result.scalar()
 
-    # Count by room
-    by_room = {}
-    for room in RoomLocation:
-        result = await db.execute(
-            select(func.count(InventoryItem.id)).where(
-                InventoryItem.room_location == room,
-                InventoryItem.is_active == True
-            )
-        )
-        by_room[room.value] = result.scalar()
+    # Count by room (dynamic from actual data)
+    room_result = await db.execute(
+        select(InventoryItem.room_location, func.count(InventoryItem.id))
+        .where(InventoryItem.is_active == True)
+        .group_by(InventoryItem.room_location)
+    )
+    by_room = {row[0]: row[1] for row in room_result.fetchall()}
 
     return {
         "total": total,
@@ -544,14 +543,12 @@ def parse_item_type(value: str) -> ItemType:
     raise ValueError(f"Unknown item type: {value}")
 
 
-def parse_room(value: str) -> RoomLocation:
+def parse_room(value: str) -> str:
     """Parse room location from string."""
     value = value.strip().replace("Room ", "").replace("room ", "")
-    if value == "2265":
-        return RoomLocation.ROOM_2265
-    elif value == "2266":
-        return RoomLocation.ROOM_2266
-    raise ValueError(f"Unknown room: {value}")
+    if not value:
+        raise ValueError("Room location cannot be empty")
+    return value
 
 
 # -----------------------------------------------------------------------------

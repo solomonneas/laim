@@ -12,7 +12,7 @@ from typing import Optional
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import InventoryItem, SyncLog, SyncStatus, ItemType, RoomLocation
+from app.models import InventoryItem, SyncLog, SyncStatus, ItemType
 from app.schemas import DeviceData
 from app.integrations.netdisco import NetdiscoClient
 from app.integrations.librenms import LibreNMSClient
@@ -330,7 +330,7 @@ class DeviceSyncService:
                     mac_address=device.mac_address,
                     asset_tag=generate_asset_tag(),
                     item_type=detect_item_type(device.model, device.vendor, device.hostname),
-                    room_location=RoomLocation.ROOM_2265,  # Default room
+                    room_location="Synced",  # Default room for auto-discovered devices
                     ip_address=device.ip_address,
                     model=device.model,
                     vendor=device.vendor,

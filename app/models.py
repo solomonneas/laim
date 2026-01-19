@@ -36,12 +36,6 @@ class ItemType(enum.Enum):
     SWITCH = "Switch"
 
 
-class RoomLocation(enum.Enum):
-    """Room location enumeration."""
-    ROOM_2265 = "2265"
-    ROOM_2266 = "2266"
-
-
 class UserRole(enum.Enum):
     """User role enumeration for RBAC."""
     SUPERUSER = "superuser"
@@ -104,7 +98,7 @@ class InventoryItem(Base):
 
     # Classification fields
     item_type = Column(SQLEnum(ItemType), nullable=False, index=True)
-    room_location = Column(SQLEnum(RoomLocation), nullable=False, index=True)
+    room_location = Column(String(100), nullable=False, index=True)  # Free-form room/location
     sub_location = Column(String(100), nullable=True)  # e.g., "Rack 1", "Shelf B", "Desk 3"
 
     # Metadata
@@ -156,7 +150,7 @@ class InventoryItem(Base):
             "mac_address": self.mac_address,
             "asset_tag": self.asset_tag,
             "item_type": self.item_type.value,
-            "room_location": self.room_location.value,
+            "room_location": self.room_location,
             "sub_location": self.sub_location,
             "notes": self.notes,
             "is_active": self.is_active,

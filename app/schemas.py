@@ -8,7 +8,7 @@ from typing import Optional
 from pydantic import BaseModel, Field, EmailStr, field_validator
 import re
 
-from app.models import ItemType, RoomLocation, UserRole, SyncStatus
+from app.models import ItemType, UserRole, SyncStatus
 
 
 # -----------------------------------------------------------------------------
@@ -49,7 +49,7 @@ class InventoryItemBase(BaseModel):
     mac_address: Optional[str] = Field(None, max_length=17)
     asset_tag: str = Field(..., min_length=1, max_length=100)
     item_type: ItemType
-    room_location: RoomLocation
+    room_location: str = Field(..., min_length=1, max_length=100)
     sub_location: Optional[str] = Field(None, max_length=100)
     notes: Optional[str] = Field(None, max_length=500)
 
@@ -77,7 +77,7 @@ class InventoryItemUpdate(BaseModel):
     mac_address: Optional[str] = Field(None, max_length=17)
     asset_tag: Optional[str] = Field(None, min_length=1, max_length=100)
     item_type: Optional[ItemType] = None
-    room_location: Optional[RoomLocation] = None
+    room_location: Optional[str] = Field(None, max_length=100)
     sub_location: Optional[str] = Field(None, max_length=100)
     notes: Optional[str] = Field(None, max_length=500)
     is_active: Optional[bool] = None
@@ -130,7 +130,7 @@ class TokenResponse(BaseModel):
 class SearchParams(BaseModel):
     query: Optional[str] = None
     item_type: Optional[ItemType] = None
-    room_location: Optional[RoomLocation] = None
+    room_location: Optional[str] = None
     is_active: bool = True
 
 

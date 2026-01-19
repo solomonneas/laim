@@ -98,7 +98,7 @@ def seed_users():
 
 def seed_sample_data():
     """Create sample inventory items for testing."""
-    from app.models import InventoryItem, ItemType, RoomLocation
+    from app.models import InventoryItem, ItemType
 
     SAMPLE_ITEMS = [
         {
@@ -107,7 +107,7 @@ def seed_sample_data():
             "mac_address": "00:1A:2B:3C:4D:01",
             "asset_tag": "AST-2024-0001",
             "item_type": ItemType.LAPTOP,
-            "room_location": RoomLocation.ROOM_2265,
+            "room_location": "2265",
             "sub_location": "Desk 1",
             "notes": "Dell Latitude 5540",
         },
@@ -117,7 +117,7 @@ def seed_sample_data():
             "mac_address": "00:1A:2B:3C:4D:02",
             "asset_tag": "AST-2024-0002",
             "item_type": ItemType.DESKTOP,
-            "room_location": RoomLocation.ROOM_2265,
+            "room_location": "2265",
             "sub_location": "Desk 2",
             "notes": "HP ProDesk 400 G7",
         },
@@ -127,7 +127,7 @@ def seed_sample_data():
             "mac_address": "00:1A:2B:3C:4D:03",
             "asset_tag": "AST-2024-0003",
             "item_type": ItemType.SERVER,
-            "room_location": RoomLocation.ROOM_2266,
+            "room_location": "2266",
             "sub_location": "Rack 1, U1-U4",
             "notes": "Dell PowerEdge R750",
         },
@@ -137,7 +137,7 @@ def seed_sample_data():
             "mac_address": "00:1A:2B:3C:4D:04",
             "asset_tag": "AST-2024-0004",
             "item_type": ItemType.WAP,
-            "room_location": RoomLocation.ROOM_2265,
+            "room_location": "2265",
             "sub_location": "Ceiling Mount A",
             "notes": "Cisco Catalyst 9120AX",
         },
@@ -147,7 +147,7 @@ def seed_sample_data():
             "mac_address": "00:1A:2B:3C:4D:05",
             "asset_tag": "AST-2024-0005",
             "item_type": ItemType.SMART_TV,
-            "room_location": RoomLocation.ROOM_2265,
+            "room_location": "2265",
             "sub_location": "Wall Mount Front",
             "notes": "Samsung 65\" QN65Q80C",
         },

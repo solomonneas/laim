@@ -12,7 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.database import SyncSessionLocal
-from app.models import InventoryItem, ItemType, RoomLocation
+from app.models import InventoryItem, ItemType
 
 
 def normalize_mac(mac: str) -> str:
@@ -46,16 +46,14 @@ def parse_item_type(value: str) -> ItemType:
     raise ValueError(f"Unknown item type: {value}")
 
 
-def parse_room(value: str) -> RoomLocation:
+def parse_room(value: str) -> str:
     """Parse room location from string."""
     value = value.strip()
     # Remove "Room " prefix if present
     value = value.replace("Room ", "").replace("room ", "")
-    if value == "2265":
-        return RoomLocation.ROOM_2265
-    elif value == "2266":
-        return RoomLocation.ROOM_2266
-    raise ValueError(f"Unknown room: {value}")
+    if not value:
+        raise ValueError("Room location cannot be empty")
+    return value
 
 
 def import_csv(csv_file: str, dry_run: bool = False, skip_duplicates: bool = True):
