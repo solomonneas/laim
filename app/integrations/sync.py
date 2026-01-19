@@ -27,33 +27,44 @@ TYPE_PATTERNS: dict[ItemType, list[str]] = {
     ItemType.ROUTER: [
         "router", "isr", "asr", "cisco router", "juniper router",
         "mikrotik router", "edgerouter", "routeros", "vyos",
-        "pfsense", "opnsense", "fortigate", "srx",
+        "pfsense", "opnsense", "fortigate", "srx", "udm", "usg",
+        "dream machine", "security gateway", "firewall", "sonicwall",
+        "asa", "fortinet", "sophos", "watchguard", "netgate",
     ],
     ItemType.SWITCH: [
         "switch", "catalyst", "nexus", "arista", "juniper switch",
         "dell switch", "powerswitch", "procurve", "comware",
-        "edgeswitch", "unifi switch", "usw-", "meraki ms",
+        "edgeswitch", "unifi switch", "usw-", "usw ", "meraki ms",
         "brocade", "icx", "fas", "s4048", "s5048", "z9100",
+        "us-", "us-8", "us-16", "us-24", "us-48", "usl-",
+        "cisco sg", "sg300", "sg500", "cisco ws-",
     ],
     ItemType.WAP: [
-        "wap", "wireless", "wifi", "ap", "access point", "aruba ap",
-        "unifi ap", "uap-", "iap-", "aironet", "meraki mr",
+        "wap", "wireless", "wifi", "access point", "aruba ap",
+        "unifi ap", "uap-", "uap ", "iap-", "aironet", "meraki mr",
+        "u6-", "u6 ", "u7-", "u7 ", "u-xg", "unifi 6", "unifi 7",
+        "ubiquiti u6", "ubiquiti u7", "nanostation", "litebeam",
+        "powerbeam", "nanobeam", "ubiquiti ap", "ac-pro", "ac-lite",
+        "ac-lr", "ac-hd", "ac-shd", "flexhd", "nanohd",
     ],
     ItemType.SERVER: [
         "server", "poweredge", "proliant", "blade", "esxi", "vmware",
         "vcenter", "dell r", "hp dl", "supermicro", "rackmount",
+        "hypervisor", "proxmox", "xenserver", "hyper-v",
     ],
     ItemType.DESKTOP: [
         "optiplex", "prodesk", "thinkcentre", "desktop", "workstation",
-        "precision", "elitedesk", "compaq",
+        "precision", "elitedesk", "compaq", "imac", "mac mini",
     ],
     ItemType.LAPTOP: [
         "latitude", "elitebook", "thinkpad", "laptop", "notebook",
         "macbook", "probook", "zbook", "inspiron", "xps",
+        "surface", "chromebook", "pavilion",
     ],
     ItemType.SMART_TV: [
         "tv", "display", "samsung tv", "lg tv", "sony tv",
-        "smart display", "signage", "monitor",
+        "smart display", "signage", "monitor", "roku", "fire tv",
+        "chromecast", "apple tv", "shield",
     ],
 }
 
