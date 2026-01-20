@@ -100,6 +100,17 @@
                             Import CSV
                         </button>
 
+                        <!-- Sync Button -->
+                        <button
+                            id="sync-btn"
+                            class="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white text-sm font-semibold rounded-lg shadow-lg shadow-purple-500/25 transition-smooth"
+                        >
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            <span id="sync-btn-text">Sync Now</span>
+                        </button>
+
                         <!-- Add Button -->
                         <button
                             id="add-item-btn"
@@ -196,6 +207,12 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                         </svg>
                         Change Room
+                    </button>
+                    <button id="bulk-delete" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-lg transition-smooth flex items-center gap-2">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Delete
                     </button>
                     <button id="bulk-cancel" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition-smooth">
                         Cancel
@@ -474,6 +491,32 @@
                 </button>
                 <button id="confirm-bulk-room" class="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-smooth">
                     Move Items
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Delete Confirmation Modal -->
+<div id="bulk-delete-modal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-backdrop absolute inset-0" id="bulk-delete-backdrop"></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+        <div class="relative bg-slate-850 rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-sm p-6">
+            <div class="text-center">
+                <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-red-500/10 text-red-400">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </div>
+                <h3 class="mt-4 text-lg font-bold text-white">Delete Items</h3>
+                <p class="mt-2 text-sm text-slate-400">Are you sure you want to delete <span id="bulk-delete-count" class="font-semibold text-white">0</span> items? This action cannot be undone.</p>
+            </div>
+            <div class="mt-6 flex gap-3">
+                <button id="cancel-bulk-delete" class="flex-1 py-2 px-4 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition-smooth">
+                    Cancel
+                </button>
+                <button id="confirm-bulk-delete" class="flex-1 py-2 px-4 bg-red-600 hover:bg-red-500 text-white font-medium rounded-lg transition-smooth">
+                    Delete Items
                 </button>
             </div>
         </div>
@@ -1053,6 +1096,99 @@
         } finally {
             confirmBulkRoomBtn.disabled = false;
             confirmBulkRoomBtn.textContent = 'Move Items';
+        }
+    });
+
+    // -------------------------------------------------------------------------
+    // Bulk Delete Functionality
+    // -------------------------------------------------------------------------
+    const bulkDeleteBtn = document.getElementById('bulk-delete');
+    const bulkDeleteModal = document.getElementById('bulk-delete-modal');
+    const bulkDeleteBackdrop = document.getElementById('bulk-delete-backdrop');
+    const bulkDeleteCountEl = document.getElementById('bulk-delete-count');
+    const cancelBulkDeleteBtn = document.getElementById('cancel-bulk-delete');
+    const confirmBulkDeleteBtn = document.getElementById('confirm-bulk-delete');
+
+    // Open bulk delete modal
+    bulkDeleteBtn.addEventListener('click', () => {
+        bulkDeleteCountEl.textContent = selectedItems.size;
+        bulkDeleteModal.classList.remove('hidden');
+    });
+
+    // Close bulk delete modal
+    function closeBulkDeleteModal() {
+        bulkDeleteModal.classList.add('hidden');
+    }
+
+    cancelBulkDeleteBtn.addEventListener('click', closeBulkDeleteModal);
+    bulkDeleteBackdrop.addEventListener('click', closeBulkDeleteModal);
+
+    // Confirm bulk delete
+    confirmBulkDeleteBtn.addEventListener('click', async () => {
+        const itemIds = Array.from(selectedItems);
+
+        if (itemIds.length === 0) return;
+
+        confirmBulkDeleteBtn.disabled = true;
+        confirmBulkDeleteBtn.textContent = 'Deleting...';
+
+        try {
+            const response = await fetch('/api/items/bulk-delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ item_ids: itemIds.map(id => parseInt(id)) }),
+                credentials: 'same-origin'
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to delete items');
+            }
+
+            closeBulkDeleteModal();
+            clearSelection();
+            refreshData();
+        } catch (error) {
+            console.error('Error deleting items:', error);
+            alert('Error: ' + error.message);
+        } finally {
+            confirmBulkDeleteBtn.disabled = false;
+            confirmBulkDeleteBtn.textContent = 'Delete Items';
+        }
+    });
+
+    // -------------------------------------------------------------------------
+    // Manual Sync Functionality
+    // -------------------------------------------------------------------------
+    const syncBtn = document.getElementById('sync-btn');
+    const syncBtnText = document.getElementById('sync-btn-text');
+
+    syncBtn.addEventListener('click', async () => {
+        syncBtn.disabled = true;
+        syncBtnText.textContent = 'Syncing...';
+
+        try {
+            const response = await fetch('/api/sync/trigger', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ source: 'all' }),
+                credentials: 'same-origin'
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Sync failed');
+            }
+
+            const result = await response.json();
+            alert(result.message);
+            refreshData();
+        } catch (error) {
+            console.error('Error syncing:', error);
+            alert('Sync failed: ' + error.message);
+        } finally {
+            syncBtn.disabled = false;
+            syncBtnText.textContent = 'Sync Now';
         }
     });
 

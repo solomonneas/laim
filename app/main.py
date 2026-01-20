@@ -425,6 +425,32 @@ async def bulk_update_room(
     return {"message": f"Updated {result.rowcount} items to room '{new_room}'", "updated": result.rowcount}
 
 
+@app.post("/api/items/bulk-delete")
+async def bulk_delete_items(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_admin)
+):
+    """Bulk soft-delete multiple items."""
+    body = await request.json()
+    item_ids = body.get("item_ids", [])
+
+    if not item_ids:
+        raise HTTPException(status_code=400, detail="No items specified")
+
+    # Soft delete all specified items
+    from sqlalchemy import update
+    result = await db.execute(
+        update(InventoryItem)
+        .where(InventoryItem.id.in_(item_ids))
+        .where(InventoryItem.is_active == True)
+        .values(is_active=False, updated_by=user.id)
+    )
+    await db.commit()
+
+    return {"message": f"Deleted {result.rowcount} items", "deleted": result.rowcount}
+
+
 # -----------------------------------------------------------------------------
 # User Management API (Superuser only)
 # -----------------------------------------------------------------------------
