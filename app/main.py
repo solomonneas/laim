@@ -581,6 +581,57 @@ async def update_user(
     return user
 
 
+@app.delete("/api/users/{user_id}")
+async def delete_user(
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_superuser)
+):
+    """Delete a user (superuser only). Cannot delete yourself."""
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    await db.delete(user)
+    await db.commit()
+    return {"message": "User deleted successfully"}
+
+
+@app.post("/api/users/switch/{user_id}")
+async def switch_user(
+    user_id: int,
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_superuser)
+):
+    """Switch to another user account (superuser only). Creates a new session as that user."""
+    result = await db.execute(select(User).where(User.id == user_id))
+    target_user = result.scalar_one_or_none()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if not target_user.is_active:
+        raise HTTPException(status_code=400, detail="Cannot switch to inactive user")
+
+    # Create new token for target user
+    access_token = create_access_token(data={"sub": target_user.username})
+
+    # Set the cookie
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        max_age=60 * 60 * 24 * 7,  # 7 days
+        samesite="lax"
+    )
+
+    return {"message": f"Switched to user {target_user.username}", "username": target_user.username}
+
+
 # -----------------------------------------------------------------------------
 # Password Change API
 # -----------------------------------------------------------------------------

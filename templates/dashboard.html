@@ -672,7 +672,7 @@
             <div class="flex items-center justify-between mb-6">
                 <div>
                     <h3 class="text-lg font-bold text-slate-900 dark:text-white">Settings</h3>
-                    <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Manage item types, room locations, appearance, and account settings</p>
+                    <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Manage item types, rooms, appearance, users, and account settings</p>
                 </div>
                 <button id="close-settings-modal" class="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-smooth">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -682,17 +682,22 @@
             </div>
 
             <!-- Tabs -->
-            <div class="flex mb-6 border-b border-slate-700">
-                <button id="settings-tab-types" class="flex-1 py-2 text-sm font-medium text-emerald-400 border-b-2 border-emerald-400 transition-smooth">
+            <div class="flex mb-6 border-b border-slate-700 overflow-x-auto">
+                <button id="settings-tab-types" class="flex-1 py-2 text-sm font-medium text-emerald-400 border-b-2 border-emerald-400 transition-smooth whitespace-nowrap px-2">
                     Item Types
                 </button>
-                <button id="settings-tab-rooms" class="flex-1 py-2 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent transition-smooth">
-                    Room Locations
+                <button id="settings-tab-rooms" class="flex-1 py-2 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent transition-smooth whitespace-nowrap px-2">
+                    Rooms
                 </button>
-                <button id="settings-tab-appearance" class="flex-1 py-2 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent transition-smooth">
+                <button id="settings-tab-appearance" class="flex-1 py-2 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent transition-smooth whitespace-nowrap px-2">
                     Appearance
                 </button>
-                <button id="settings-tab-password" class="flex-1 py-2 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent transition-smooth">
+                {% if user.role.value == 'superuser' %}
+                <button id="settings-tab-users" class="flex-1 py-2 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent transition-smooth whitespace-nowrap px-2">
+                    Users
+                </button>
+                {% endif %}
+                <button id="settings-tab-password" class="flex-1 py-2 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent transition-smooth whitespace-nowrap px-2">
                     Password
                 </button>
             </div>
@@ -726,6 +731,49 @@
                     <p class="text-sm text-slate-400 text-center py-4">Loading room locations...</p>
                 </div>
             </div>
+
+            <!-- Users Section (Superuser only) -->
+            {% if user.role.value == 'superuser' %}
+            <div id="settings-users-section" class="hidden">
+                <!-- Create User Form -->
+                <div class="mb-4 p-4 bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <h4 class="text-sm font-medium text-slate-900 dark:text-white mb-3">Create New User</h4>
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="text" id="new-user-username" placeholder="Username"
+                                   class="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <input type="email" id="new-user-email" placeholder="Email"
+                                   class="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="password" id="new-user-password" placeholder="Password (min 8 chars)"
+                                   class="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <select id="new-user-role"
+                                    class="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <option value="admin">Admin</option>
+                                <option value="superuser">Superuser</option>
+                            </select>
+                        </div>
+                        <button id="create-user-btn" class="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-smooth">
+                            Create User
+                        </button>
+                    </div>
+                    <div id="create-user-error" class="mt-2 text-sm text-red-400 hidden"></div>
+                    <div id="create-user-success" class="mt-2 text-sm text-emerald-400 hidden"></div>
+                </div>
+
+                <!-- Users List -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-medium text-slate-900 dark:text-white">Existing Users</h4>
+                        <span id="users-count" class="text-xs text-slate-500"></span>
+                    </div>
+                    <div id="users-list" class="space-y-2 max-h-64 overflow-y-auto">
+                        <p class="text-sm text-slate-400 text-center py-4">Loading users...</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
 
             <!-- Password Section -->
             <div id="settings-password-section" class="hidden">
@@ -1902,10 +1950,12 @@
     const settingsTabTypes = document.getElementById('settings-tab-types');
     const settingsTabRooms = document.getElementById('settings-tab-rooms');
     const settingsTabAppearance = document.getElementById('settings-tab-appearance');
+    const settingsTabUsers = document.getElementById('settings-tab-users');
     const settingsTabPassword = document.getElementById('settings-tab-password');
     const settingsTypesSection = document.getElementById('settings-types-section');
     const settingsRoomsSection = document.getElementById('settings-rooms-section');
     const settingsAppearanceSection = document.getElementById('settings-appearance-section');
+    const settingsUsersSection = document.getElementById('settings-users-section');
     const settingsPasswordSection = document.getElementById('settings-password-section');
     const settingsFooter = document.getElementById('settings-footer');
     const newTypeInput = document.getElementById('new-type-input');
@@ -1936,11 +1986,11 @@
 
     // Helper to reset all tabs
     function resetSettingsTabs() {
-        [settingsTabTypes, settingsTabRooms, settingsTabAppearance, settingsTabPassword].forEach(tab => {
+        [settingsTabTypes, settingsTabRooms, settingsTabAppearance, settingsTabUsers, settingsTabPassword].filter(Boolean).forEach(tab => {
             tab.classList.remove('text-emerald-400', 'border-emerald-400');
             tab.classList.add('text-slate-400', 'border-transparent');
         });
-        [settingsTypesSection, settingsRoomsSection, settingsAppearanceSection, settingsPasswordSection].forEach(section => {
+        [settingsTypesSection, settingsRoomsSection, settingsAppearanceSection, settingsUsersSection, settingsPasswordSection].filter(Boolean).forEach(section => {
             section.classList.add('hidden');
         });
     }
@@ -1984,6 +2034,18 @@
         settingsFooter.classList.add('hidden');
         loadAppearanceSettings();
     });
+
+    // Users tab (superuser only)
+    if (settingsTabUsers) {
+        settingsTabUsers.addEventListener('click', () => {
+            resetSettingsTabs();
+            settingsTabUsers.classList.add('text-emerald-400', 'border-emerald-400');
+            settingsTabUsers.classList.remove('text-slate-400', 'border-transparent');
+            settingsUsersSection.classList.remove('hidden');
+            settingsFooter.classList.add('hidden');
+            loadUsers();
+        });
+    }
 
     // Drag and drop functionality for settings lists
     let draggedItem = null;
@@ -2531,6 +2593,210 @@
         // Update page title
         document.title = `Dashboard - ${appearance.title}`;
     }
+
+    // -------------------------------------------------------------------------
+    // User Management Functionality (Superuser only)
+    // -------------------------------------------------------------------------
+    const usersList = document.getElementById('users-list');
+    const usersCount = document.getElementById('users-count');
+    const createUserBtn = document.getElementById('create-user-btn');
+    const createUserError = document.getElementById('create-user-error');
+    const createUserSuccess = document.getElementById('create-user-success');
+    const currentUserId = {{ user.id }};
+    const currentUsername = '{{ user.username }}';
+
+    let allUsers = [];
+
+    // Load users list
+    async function loadUsers() {
+        if (!usersList) return;
+
+        try {
+            const response = await fetch('/api/users', { credentials: 'same-origin' });
+            if (!response.ok) throw new Error('Failed to load users');
+            allUsers = await response.json();
+            renderUsers();
+        } catch (error) {
+            console.error('Error loading users:', error);
+            usersList.innerHTML = '<p class="text-sm text-red-400 text-center py-4">Failed to load users</p>';
+        }
+    }
+
+    // Render users list
+    function renderUsers() {
+        if (!usersList) return;
+
+        if (allUsers.length === 0) {
+            usersList.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">No users found</p>';
+            return;
+        }
+
+        if (usersCount) {
+            usersCount.textContent = `${allUsers.length} user${allUsers.length !== 1 ? 's' : ''}`;
+        }
+
+        usersList.innerHTML = allUsers.map(user => `
+            <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-medium text-sm ${user.role === 'superuser' ? 'bg-amber-500' : 'bg-blue-500'}">
+                        ${user.username.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-slate-900 dark:text-white">${user.username}</span>
+                            ${user.id === currentUserId ? '<span class="text-xs text-emerald-500">(you)</span>' : ''}
+                            ${!user.is_active ? '<span class="text-xs text-red-400">(inactive)</span>' : ''}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-slate-500">${user.email}</span>
+                            <span class="px-1.5 py-0.5 text-xs rounded ${user.role === 'superuser' ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400' : 'bg-blue-500/20 text-blue-600 dark:text-blue-400'}">${user.role}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    ${user.id !== currentUserId ? `
+                        <button onclick="switchToUser(${user.id}, '${user.username}')" class="px-2 py-1 text-xs bg-cyan-600 hover:bg-cyan-500 text-white rounded transition-smooth" title="Switch to this user">
+                            Switch
+                        </button>
+                        <button onclick="toggleUserActive(${user.id}, ${user.is_active})" class="px-2 py-1 text-xs ${user.is_active ? 'bg-amber-600 hover:bg-amber-500' : 'bg-emerald-600 hover:bg-emerald-500'} text-white rounded transition-smooth">
+                            ${user.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button onclick="deleteUser(${user.id}, '${user.username}')" class="px-2 py-1 text-xs bg-red-600 hover:bg-red-500 text-white rounded transition-smooth">
+                            Delete
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Create user
+    if (createUserBtn) {
+        createUserBtn.addEventListener('click', async () => {
+            const username = document.getElementById('new-user-username').value.trim();
+            const email = document.getElementById('new-user-email').value.trim();
+            const password = document.getElementById('new-user-password').value;
+            const role = document.getElementById('new-user-role').value;
+
+            createUserError.classList.add('hidden');
+            createUserSuccess.classList.add('hidden');
+
+            if (!username || !email || !password) {
+                createUserError.textContent = 'All fields are required';
+                createUserError.classList.remove('hidden');
+                return;
+            }
+
+            if (password.length < 8) {
+                createUserError.textContent = 'Password must be at least 8 characters';
+                createUserError.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password, role }),
+                    credentials: 'same-origin'
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    createUserError.textContent = data.detail || 'Failed to create user';
+                    createUserError.classList.remove('hidden');
+                    return;
+                }
+
+                // Success
+                createUserSuccess.textContent = `User "${username}" created successfully`;
+                createUserSuccess.classList.remove('hidden');
+
+                // Clear form
+                document.getElementById('new-user-username').value = '';
+                document.getElementById('new-user-email').value = '';
+                document.getElementById('new-user-password').value = '';
+                document.getElementById('new-user-role').value = 'admin';
+
+                // Reload users list
+                loadUsers();
+
+                setTimeout(() => createUserSuccess.classList.add('hidden'), 3000);
+            } catch (error) {
+                console.error('Error creating user:', error);
+                createUserError.textContent = 'An error occurred. Please try again.';
+                createUserError.classList.remove('hidden');
+            }
+        });
+    }
+
+    // Toggle user active status
+    window.toggleUserActive = async function(userId, currentlyActive) {
+        try {
+            const response = await fetch(`/api/users/${userId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_active: !currentlyActive }),
+                credentials: 'same-origin'
+            });
+
+            if (!response.ok) throw new Error('Failed to update user');
+            loadUsers();
+        } catch (error) {
+            console.error('Error updating user:', error);
+            alert('Failed to update user');
+        }
+    };
+
+    // Delete user
+    window.deleteUser = async function(userId, username) {
+        if (!confirm(`Are you sure you want to delete user "${username}"? This cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/users/${userId}`, {
+                method: 'DELETE',
+                credentials: 'same-origin'
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.detail || 'Failed to delete user');
+            }
+
+            loadUsers();
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            alert(error.message || 'Failed to delete user');
+        }
+    };
+
+    // Switch to another user
+    window.switchToUser = async function(userId, username) {
+        if (!confirm(`Switch to user "${username}"? You will be logged in as that user.`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/users/switch/${userId}`, {
+                method: 'POST',
+                credentials: 'same-origin'
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.detail || 'Failed to switch user');
+            }
+
+            // Reload page to reflect new user
+            window.location.reload();
+        } catch (error) {
+            console.error('Error switching user:', error);
+            alert(error.message || 'Failed to switch user');
+        }
+    };
 
     // -------------------------------------------------------------------------
     // Item Details Modal Functionality

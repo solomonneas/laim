@@ -27,6 +27,7 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     password: Optional[str] = Field(None, min_length=8, max_length=100)
+    role: Optional[UserRole] = None
     is_active: Optional[bool] = None
 
 
