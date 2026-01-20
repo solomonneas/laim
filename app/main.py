@@ -22,7 +22,7 @@ from sqlalchemy import select, or_, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db, init_db
-from app.models import User, InventoryItem, SyncLog, ItemType, UserRole, SyncStatus
+from app.models import User, InventoryItem, SyncLog, Backup, ItemType, UserRole, SyncStatus
 from app.schemas import (
     UserCreate,
     UserResponse,
@@ -769,55 +769,175 @@ async def import_csv(
 
 
 # -----------------------------------------------------------------------------
-# Backup API Endpoint
+# Backup API Endpoints
 # -----------------------------------------------------------------------------
-@app.get("/api/backup")
-async def backup_inventory(
+@app.post("/api/backups")
+async def create_backup(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_admin)
 ):
-    """
-    Export all inventory items as a JSON backup file.
-    """
-    from datetime import datetime
-
+    """Create a server-side backup of all inventory items."""
     result = await db.execute(
         select(InventoryItem).where(InventoryItem.is_active == True).order_by(InventoryItem.id)
     )
     items = result.scalars().all()
 
-    backup_data = {
-        "backup_date": datetime.now().isoformat(),
-        "total_items": len(items),
-        "items": [
-            {
-                "id": item.id,
-                "hostname": item.hostname,
-                "item_type": item.item_type.value,
-                "serial_number": item.serial_number,
-                "mac_address": item.mac_address,
-                "asset_tag": item.asset_tag,
-                "ip_address": item.ip_address,
-                "room_location": item.room_location,
-                "sub_location": item.sub_location,
-                "notes": item.notes,
-                "model": item.model,
-                "vendor": item.vendor,
-                "firmware_version": item.firmware_version,
-                "source": item.source,
-                "source_id": item.source_id,
-            }
-            for item in items
-        ]
+    backup_data = [
+        {
+            "id": item.id,
+            "hostname": item.hostname,
+            "item_type": item.item_type.value,
+            "serial_number": item.serial_number,
+            "mac_address": item.mac_address,
+            "asset_tag": item.asset_tag,
+            "ip_address": item.ip_address,
+            "room_location": item.room_location,
+            "sub_location": item.sub_location,
+            "notes": item.notes,
+            "model": item.model,
+            "vendor": item.vendor,
+            "firmware_version": item.firmware_version,
+            "source": item.source,
+            "source_id": item.source_id,
+        }
+        for item in items
+    ]
+
+    backup = Backup(
+        created_by=user.id,
+        item_count=len(items),
+        data=backup_data
+    )
+    db.add(backup)
+    await db.commit()
+    await db.refresh(backup)
+
+    return {
+        "id": backup.id,
+        "created_at": backup.created_at.isoformat(),
+        "item_count": backup.item_count,
+        "message": f"Backup created with {backup.item_count} items"
     }
 
-    filename = f"laim_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
 
-    return Response(
-        content=JSONResponse(content=backup_data).body,
-        media_type="application/json",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+@app.get("/api/backups")
+async def list_backups(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+    limit: int = Query(default=10, le=50)
+):
+    """List recent backups."""
+    result = await db.execute(
+        select(Backup).order_by(desc(Backup.created_at)).limit(limit)
     )
+    backups = result.scalars().all()
+
+    return [
+        {
+            "id": b.id,
+            "created_at": b.created_at.isoformat(),
+            "item_count": b.item_count,
+            "note": b.note
+        }
+        for b in backups
+    ]
+
+
+@app.post("/api/backups/{backup_id}/restore")
+async def restore_backup(
+    backup_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_admin)
+):
+    """Restore inventory from a backup."""
+    # Get the backup
+    result = await db.execute(select(Backup).where(Backup.id == backup_id))
+    backup = result.scalar_one_or_none()
+    if not backup:
+        raise HTTPException(status_code=404, detail="Backup not found")
+
+    # Soft-delete all current items
+    await db.execute(
+        select(InventoryItem).where(InventoryItem.is_active == True)
+    )
+    from sqlalchemy import update
+    await db.execute(
+        update(InventoryItem).where(InventoryItem.is_active == True).values(is_active=False)
+    )
+
+    # Restore items from backup
+    restored_count = 0
+    for item_data in backup.data:
+        # Check if item exists (by original ID)
+        existing = await db.execute(
+            select(InventoryItem).where(InventoryItem.id == item_data["id"])
+        )
+        existing_item = existing.scalar_one_or_none()
+
+        if existing_item:
+            # Reactivate and update existing item
+            existing_item.is_active = True
+            existing_item.hostname = item_data["hostname"]
+            existing_item.item_type = ItemType(item_data["item_type"])
+            existing_item.serial_number = item_data.get("serial_number")
+            existing_item.mac_address = item_data.get("mac_address")
+            existing_item.asset_tag = item_data.get("asset_tag")
+            existing_item.ip_address = item_data.get("ip_address")
+            existing_item.room_location = item_data.get("room_location")
+            existing_item.sub_location = item_data.get("sub_location")
+            existing_item.notes = item_data.get("notes")
+            existing_item.model = item_data.get("model")
+            existing_item.vendor = item_data.get("vendor")
+            existing_item.firmware_version = item_data.get("firmware_version")
+            existing_item.source = item_data.get("source")
+            existing_item.source_id = item_data.get("source_id")
+        else:
+            # Create new item
+            new_item = InventoryItem(
+                hostname=item_data["hostname"],
+                item_type=ItemType(item_data["item_type"]),
+                serial_number=item_data.get("serial_number"),
+                mac_address=item_data.get("mac_address"),
+                asset_tag=item_data.get("asset_tag"),
+                ip_address=item_data.get("ip_address"),
+                room_location=item_data.get("room_location"),
+                sub_location=item_data.get("sub_location"),
+                notes=item_data.get("notes"),
+                model=item_data.get("model"),
+                vendor=item_data.get("vendor"),
+                firmware_version=item_data.get("firmware_version"),
+                source=item_data.get("source"),
+                source_id=item_data.get("source_id"),
+                is_active=True
+            )
+            db.add(new_item)
+        restored_count += 1
+
+    await db.commit()
+
+    return {
+        "message": f"Restored {restored_count} items from backup",
+        "restored_count": restored_count,
+        "backup_id": backup_id
+    }
+
+
+@app.delete("/api/backups/{backup_id}")
+async def delete_backup(
+    backup_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_admin)
+):
+    """Delete a backup."""
+    result = await db.execute(select(Backup).where(Backup.id == backup_id))
+    backup = result.scalar_one_or_none()
+    if not backup:
+        raise HTTPException(status_code=404, detail="Backup not found")
+
+    await db.delete(backup)
+    await db.commit()
+
+    return {"message": "Backup deleted"}
 
 
 # -----------------------------------------------------------------------------

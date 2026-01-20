@@ -201,3 +201,23 @@ class SyncLog(Base):
             "skipped": self.skipped,
             "errors": self.errors,
         }
+
+
+# -----------------------------------------------------------------------------
+# Backup Model
+# -----------------------------------------------------------------------------
+class Backup(Base):
+    """Backup model for storing inventory snapshots."""
+    __tablename__ = "backups"
+
+    id = Column(Integer, primary_key=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=func.now(), nullable=False)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    item_count = Column(Integer, default=0)
+    data = Column(JSON, nullable=False)  # Stores the full inventory snapshot
+    note = Column(String(255), nullable=True)  # Optional description
+
+    creator = relationship("User", foreign_keys=[created_by])
+
+    def __repr__(self):
+        return f"<Backup(id={self.id}, items={self.item_count}, created_at='{self.created_at}')>"
