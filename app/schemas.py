@@ -58,14 +58,15 @@ class InventoryItemBase(BaseModel):
     def validate_mac_address(cls, v: Optional[str]) -> Optional[str]:
         if v is None or v == "":
             return None
-        # Remove all separators and spaces, uppercase
-        v = v.upper().replace("-", "").replace(":", "").replace(".", "").replace(" ", "")
+        original = v.upper()
+        # Remove all separators and spaces for validation
+        stripped = original.replace("-", "").replace(":", "").replace(".", "").replace(" ", "")
         # Check if it's a valid 12-character hex string
-        if len(v) == 12 and all(c in "0123456789ABCDEF" for c in v):
+        if len(stripped) == 12 and all(c in "0123456789ABCDEF" for c in stripped):
             # Format as XX:XX:XX:XX:XX:XX
-            return ":".join(v[i:i+2] for i in range(0, 12, 2))
-        # If not valid, return as-is (don't block responses for bad data)
-        return v
+            return ":".join(stripped[i:i+2] for i in range(0, 12, 2))
+        # If not valid, return original input (don't block responses for bad data)
+        return original
 
 
 class InventoryItemCreate(InventoryItemBase):
@@ -88,14 +89,15 @@ class InventoryItemUpdate(BaseModel):
     def validate_mac_address(cls, v: Optional[str]) -> Optional[str]:
         if v is None or v == "":
             return None
-        # Remove all separators and spaces, uppercase
-        v = v.upper().replace("-", "").replace(":", "").replace(".", "").replace(" ", "")
+        original = v.upper()
+        # Remove all separators and spaces for validation
+        stripped = original.replace("-", "").replace(":", "").replace(".", "").replace(" ", "")
         # Check if it's a valid 12-character hex string
-        if len(v) == 12 and all(c in "0123456789ABCDEF" for c in v):
+        if len(stripped) == 12 and all(c in "0123456789ABCDEF" for c in stripped):
             # Format as XX:XX:XX:XX:XX:XX
-            return ":".join(v[i:i+2] for i in range(0, 12, 2))
-        # If not valid, return as-is (don't block for bad data)
-        return v
+            return ":".join(stripped[i:i+2] for i in range(0, 12, 2))
+        # If not valid, return original input (don't block for bad data)
+        return original
 
 
 class InventoryItemResponse(InventoryItemBase):
