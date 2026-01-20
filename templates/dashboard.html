@@ -670,13 +670,14 @@
 
             <!-- Item Types Section -->
             <div id="settings-types-section">
-                <div class="flex items-center gap-2 mb-4">
+                <div class="flex items-center gap-2 mb-2">
                     <input type="text" id="new-type-input" placeholder="New item type name..."
                            class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     <button id="add-type-btn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-smooth">
                         Add
                     </button>
                 </div>
+                <p class="text-xs text-slate-500 dark:text-slate-500 mb-3">Drag items to reorder how they appear in dropdowns</p>
                 <div id="item-types-list" class="space-y-2 max-h-64 overflow-y-auto">
                     <p class="text-sm text-slate-400 text-center py-4">Loading item types...</p>
                 </div>
@@ -684,13 +685,14 @@
 
             <!-- Room Locations Section -->
             <div id="settings-rooms-section" class="hidden">
-                <div class="flex items-center gap-2 mb-4">
+                <div class="flex items-center gap-2 mb-2">
                     <input type="text" id="new-room-input" placeholder="New room location..."
                            class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     <button id="add-room-btn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-smooth">
                         Add
                     </button>
                 </div>
+                <p class="text-xs text-slate-500 dark:text-slate-500 mb-3">Drag items to reorder how they appear in dropdowns</p>
                 <div id="room-locations-list" class="space-y-2 max-h-64 overflow-y-auto">
                     <p class="text-sm text-slate-400 text-center py-4">Loading room locations...</p>
                 </div>
@@ -1779,6 +1781,83 @@
         passwordSuccess.classList.add('hidden');
     });
 
+    // Drag and drop functionality for settings lists
+    let draggedItem = null;
+    let draggedIndex = null;
+
+    function setupDragAndDrop(container, listType) {
+        const items = container.querySelectorAll('[draggable="true"]');
+
+        items.forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                draggedItem = item;
+                draggedIndex = parseInt(item.dataset.index);
+                item.classList.add('opacity-50');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            item.addEventListener('dragend', () => {
+                draggedItem.classList.remove('opacity-50');
+                draggedItem = null;
+                draggedIndex = null;
+                // Remove all drag-over styles
+                container.querySelectorAll('[draggable="true"]').forEach(el => {
+                    el.classList.remove('border-t-2', 'border-b-2', 'border-emerald-500');
+                });
+            });
+
+            item.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+
+                const rect = item.getBoundingClientRect();
+                const midY = rect.top + rect.height / 2;
+
+                // Remove previous indicators
+                container.querySelectorAll('[draggable="true"]').forEach(el => {
+                    el.classList.remove('border-t-2', 'border-b-2', 'border-emerald-500');
+                });
+
+                // Show drop indicator
+                if (e.clientY < midY) {
+                    item.classList.add('border-t-2', 'border-emerald-500');
+                } else {
+                    item.classList.add('border-b-2', 'border-emerald-500');
+                }
+            });
+
+            item.addEventListener('dragleave', () => {
+                item.classList.remove('border-t-2', 'border-b-2', 'border-emerald-500');
+            });
+
+            item.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                const targetIndex = parseInt(item.dataset.index);
+
+                if (draggedIndex === null || draggedIndex === targetIndex) return;
+
+                const rect = item.getBoundingClientRect();
+                const midY = rect.top + rect.height / 2;
+                let newIndex = e.clientY < midY ? targetIndex : targetIndex + 1;
+
+                // Adjust for moving down
+                if (draggedIndex < newIndex) newIndex--;
+
+                if (listType === 'types') {
+                    const [moved] = currentItemTypes.splice(draggedIndex, 1);
+                    currentItemTypes.splice(newIndex, 0, moved);
+                    await saveItemTypes();
+                    renderItemTypes();
+                } else if (listType === 'rooms') {
+                    const [moved] = currentRoomLocations.splice(draggedIndex, 1);
+                    currentRoomLocations.splice(newIndex, 0, moved);
+                    await saveRoomLocations();
+                    renderRoomLocations();
+                }
+            });
+        });
+    }
+
     // Load item types
     async function loadItemTypes() {
         try {
@@ -1793,7 +1872,7 @@
         }
     }
 
-    // Render item types list
+    // Render item types list with drag-and-drop
     function renderItemTypes() {
         if (currentItemTypes.length === 0) {
             itemTypesList.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">No item types defined</p>';
@@ -1801,13 +1880,22 @@
         }
 
         itemTypesList.innerHTML = currentItemTypes.map((type, index) => `
-            <div class="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700/50">
-                <span class="text-sm text-slate-900 dark:text-white">${type}</span>
+            <div class="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700/50 cursor-grab active:cursor-grabbing"
+                 draggable="true" data-index="${index}" data-list="types">
+                <div class="flex items-center gap-3">
+                    <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
+                    </svg>
+                    <span class="text-sm text-slate-900 dark:text-white">${type}</span>
+                </div>
                 <button onclick="removeItemType(${index})" class="px-3 py-1 text-xs bg-red-600 hover:bg-red-500 text-white rounded transition-smooth">
                     Remove
                 </button>
             </div>
         `).join('');
+
+        // Add drag-and-drop event listeners
+        setupDragAndDrop(itemTypesList, 'types');
     }
 
     // Add item type
@@ -1866,7 +1954,7 @@
         }
     }
 
-    // Render room locations list
+    // Render room locations list with drag-and-drop
     function renderRoomLocations() {
         if (currentRoomLocations.length === 0) {
             roomLocationsList.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">No room locations defined</p>';
@@ -1874,13 +1962,22 @@
         }
 
         roomLocationsList.innerHTML = currentRoomLocations.map((room, index) => `
-            <div class="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700/50">
-                <span class="text-sm text-slate-900 dark:text-white">${room}</span>
+            <div class="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700/50 cursor-grab active:cursor-grabbing"
+                 draggable="true" data-index="${index}" data-list="rooms">
+                <div class="flex items-center gap-3">
+                    <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
+                    </svg>
+                    <span class="text-sm text-slate-900 dark:text-white">${room}</span>
+                </div>
                 <button onclick="removeRoomLocation(${index})" class="px-3 py-1 text-xs bg-red-600 hover:bg-red-500 text-white rounded transition-smooth">
                     Remove
                 </button>
             </div>
         `).join('');
+
+        // Add drag-and-drop event listeners
+        setupDragAndDrop(roomLocationsList, 'rooms');
     }
 
     // Add room location
