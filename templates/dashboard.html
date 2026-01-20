@@ -713,12 +713,15 @@
     confirmDeleteBtn.addEventListener('click', handleDelete);
 
     // Total stat card click to reset filters
-    document.getElementById('total-stat').addEventListener('click', () => {
-        typeFilter.value = '';
-        roomFilter.value = '';
-        searchInput.value = '';
-        fetchItems();
-    });
+    const totalStat = document.getElementById('total-stat');
+    if (totalStat) {
+        totalStat.addEventListener('click', () => {
+            typeFilter.value = '';
+            roomFilter.value = '';
+            searchInput.value = '';
+            fetchItems();
+        });
+    }
 
     // Type stat card click to filter
     document.querySelectorAll('.type-stat').forEach(card => {
