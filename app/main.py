@@ -1202,7 +1202,7 @@ async def update_appearance_api(
     appearance = body.get("appearance", {})
 
     # Validate required fields
-    title = appearance.get("title", "LAIM").strip()[:30]
+    title = appearance.get("title", "LAIM").strip()
     icon = appearance.get("icon", "chip")
     accent_color = appearance.get("accentColor", "#3b82f6")
     secondary_color = appearance.get("secondaryColor", "#22d3ee")
