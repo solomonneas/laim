@@ -769,6 +769,58 @@ async def import_csv(
 
 
 # -----------------------------------------------------------------------------
+# Backup API Endpoint
+# -----------------------------------------------------------------------------
+@app.get("/api/backup")
+async def backup_inventory(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_admin)
+):
+    """
+    Export all inventory items as a JSON backup file.
+    """
+    from datetime import datetime
+
+    result = await db.execute(
+        select(InventoryItem).where(InventoryItem.is_active == True).order_by(InventoryItem.id)
+    )
+    items = result.scalars().all()
+
+    backup_data = {
+        "backup_date": datetime.now().isoformat(),
+        "total_items": len(items),
+        "items": [
+            {
+                "id": item.id,
+                "hostname": item.hostname,
+                "item_type": item.item_type.value,
+                "serial_number": item.serial_number,
+                "mac_address": item.mac_address,
+                "asset_tag": item.asset_tag,
+                "ip_address": item.ip_address,
+                "room_location": item.room_location,
+                "sub_location": item.sub_location,
+                "notes": item.notes,
+                "model": item.model,
+                "vendor": item.vendor,
+                "firmware_version": item.firmware_version,
+                "source": item.source,
+                "source_id": item.source_id,
+            }
+            for item in items
+        ]
+    }
+
+    filename = f"laim_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+
+    return Response(
+        content=JSONResponse(content=backup_data).body,
+        media_type="application/json",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+# -----------------------------------------------------------------------------
 # Device Sync API Endpoints
 # -----------------------------------------------------------------------------
 @app.post("/api/sync/trigger", response_model=SyncTriggerResponse)
