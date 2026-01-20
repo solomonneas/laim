@@ -58,12 +58,13 @@ class InventoryItemBase(BaseModel):
     def validate_mac_address(cls, v: Optional[str]) -> Optional[str]:
         if v is None or v == "":
             return None
-        # Normalize MAC address format
-        v = v.upper().replace("-", ":").replace(".", ":")
-        # Validate MAC address format
-        mac_pattern = r"^([0-9A-F]{2}:){5}[0-9A-F]{2}$"
-        if not re.match(mac_pattern, v):
-            raise ValueError("Invalid MAC address format. Use XX:XX:XX:XX:XX:XX")
+        # Remove all separators and spaces, uppercase
+        v = v.upper().replace("-", "").replace(":", "").replace(".", "").replace(" ", "")
+        # Check if it's a valid 12-character hex string
+        if len(v) == 12 and all(c in "0123456789ABCDEF" for c in v):
+            # Format as XX:XX:XX:XX:XX:XX
+            return ":".join(v[i:i+2] for i in range(0, 12, 2))
+        # If not valid, return as-is (don't block responses for bad data)
         return v
 
 
@@ -87,10 +88,13 @@ class InventoryItemUpdate(BaseModel):
     def validate_mac_address(cls, v: Optional[str]) -> Optional[str]:
         if v is None or v == "":
             return None
-        v = v.upper().replace("-", ":").replace(".", ":")
-        mac_pattern = r"^([0-9A-F]{2}:){5}[0-9A-F]{2}$"
-        if not re.match(mac_pattern, v):
-            raise ValueError("Invalid MAC address format. Use XX:XX:XX:XX:XX:XX")
+        # Remove all separators and spaces, uppercase
+        v = v.upper().replace("-", "").replace(":", "").replace(".", "").replace(" ", "")
+        # Check if it's a valid 12-character hex string
+        if len(v) == 12 and all(c in "0123456789ABCDEF" for c in v):
+            # Format as XX:XX:XX:XX:XX:XX
+            return ":".join(v[i:i+2] for i in range(0, 12, 2))
+        # If not valid, return as-is (don't block for bad data)
         return v
 
 
