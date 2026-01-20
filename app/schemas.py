@@ -45,11 +45,12 @@ class UserResponse(UserBase):
 # -----------------------------------------------------------------------------
 class InventoryItemBase(BaseModel):
     hostname: str = Field(..., min_length=1, max_length=255)
-    serial_number: str = Field(..., min_length=1, max_length=100)
-    mac_address: Optional[str] = Field(None, max_length=17)
-    asset_tag: str = Field(..., min_length=1, max_length=100)
     item_type: ItemType
-    room_location: str = Field(..., min_length=1, max_length=100)
+    serial_number: Optional[str] = Field(None, max_length=100)
+    mac_address: Optional[str] = Field(None, max_length=17)
+    asset_tag: Optional[str] = Field(None, max_length=100)
+    ip_address: Optional[str] = Field(None, max_length=45)
+    room_location: Optional[str] = Field(None, max_length=100)
     sub_location: Optional[str] = Field(None, max_length=100)
     notes: Optional[str] = Field(None, max_length=500)
 
@@ -75,10 +76,11 @@ class InventoryItemCreate(InventoryItemBase):
 
 class InventoryItemUpdate(BaseModel):
     hostname: Optional[str] = Field(None, min_length=1, max_length=255)
-    serial_number: Optional[str] = Field(None, min_length=1, max_length=100)
-    mac_address: Optional[str] = Field(None, max_length=17)
-    asset_tag: Optional[str] = Field(None, min_length=1, max_length=100)
     item_type: Optional[ItemType] = None
+    serial_number: Optional[str] = Field(None, max_length=100)
+    mac_address: Optional[str] = Field(None, max_length=17)
+    asset_tag: Optional[str] = Field(None, max_length=100)
+    ip_address: Optional[str] = Field(None, max_length=45)
     room_location: Optional[str] = Field(None, max_length=100)
     sub_location: Optional[str] = Field(None, max_length=100)
     notes: Optional[str] = Field(None, max_length=500)

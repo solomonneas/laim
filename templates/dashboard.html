@@ -149,6 +149,9 @@
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-200 select-none" data-sort="asset_tag">
                                     <span class="inline-flex items-center gap-1">Asset Tag <span class="sort-icon"></span></span>
                                 </th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-200 select-none" data-sort="ip_address">
+                                    <span class="inline-flex items-center gap-1">IP Address <span class="sort-icon"></span></span>
+                                </th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-200 select-none" data-sort="room_location">
                                     <span class="inline-flex items-center gap-1">Room <span class="sort-icon"></span></span>
                                 </th>
@@ -180,6 +183,7 @@
                                 <td class="px-4 py-3 font-mono text-sm text-slate-300 tabular-nums">{{ item.serial_number }}</td>
                                 <td class="px-4 py-3 font-mono text-sm text-slate-300 tabular-nums">{{ item.mac_address or '-' }}</td>
                                 <td class="px-4 py-3 font-mono text-sm text-slate-300 tabular-nums">{{ item.asset_tag }}</td>
+                                <td class="px-4 py-3 font-mono text-sm text-slate-300 tabular-nums">{{ item.ip_address or '-' }}</td>
                                 <td class="px-4 py-3 text-sm text-slate-300">{{ item.room_location }}</td>
                                 <td class="px-4 py-3 text-sm text-slate-400">{{ item.sub_location or '-' }}</td>
                                 <td class="px-4 py-3 text-right">
@@ -289,9 +293,10 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-1">Room *</label>
-                        <select id="room_location" name="room_location" required
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Room</label>
+                        <select id="room_location" name="room_location"
                             class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth">
+                            <option value="">-- Select Room --</option>
                             {% for room in room_locations %}
                             <option value="{{ room }}">Room {{ room }}</option>
                             {% endfor %}
@@ -299,25 +304,34 @@
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-1">Serial Number *</label>
-                    <input type="text" id="serial_number" name="serial_number" required
-                        class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth tabular-nums"
-                        placeholder="SN-12345678">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Serial Number</label>
+                        <input type="text" id="serial_number" name="serial_number"
+                            class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth tabular-nums"
+                            placeholder="SN-12345678">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Asset Tag</label>
+                        <input type="text" id="asset_tag" name="asset_tag"
+                            class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth tabular-nums"
+                            placeholder="AST-2024-0001">
+                    </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-1">MAC Address</label>
-                    <input type="text" id="mac_address" name="mac_address"
-                        class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth tabular-nums"
-                        placeholder="00:1A:2B:3C:4D:5E">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-1">Asset Tag *</label>
-                    <input type="text" id="asset_tag" name="asset_tag" required
-                        class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth tabular-nums"
-                        placeholder="AST-2024-0001">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">MAC Address</label>
+                        <input type="text" id="mac_address" name="mac_address"
+                            class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth tabular-nums"
+                            placeholder="00:1A:2B:3C:4D:5E">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">IP Address</label>
+                        <input type="text" id="ip_address" name="ip_address"
+                            class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth tabular-nums"
+                            placeholder="192.168.1.100">
+                    </div>
                 </div>
 
                 <div>
@@ -830,6 +844,7 @@
                 <td class="px-4 py-3 font-mono text-sm text-slate-300 tabular-nums">${escapeHtml(item.serial_number)}</td>
                 <td class="px-4 py-3 font-mono text-sm text-slate-300 tabular-nums">${item.mac_address ? escapeHtml(item.mac_address) : '-'}</td>
                 <td class="px-4 py-3 font-mono text-sm text-slate-300 tabular-nums">${escapeHtml(item.asset_tag)}</td>
+                <td class="px-4 py-3 font-mono text-sm text-slate-300 tabular-nums">${item.ip_address ? escapeHtml(item.ip_address) : '-'}</td>
                 <td class="px-4 py-3 text-sm text-slate-300">${escapeHtml(item.room_location)}</td>
                 <td class="px-4 py-3 text-sm text-slate-400">${item.sub_location ? escapeHtml(item.sub_location) : '-'}</td>
                 <td class="px-4 py-3 text-right">
@@ -925,10 +940,11 @@
             document.getElementById('item-id').value = item.id;
             document.getElementById('hostname').value = item.hostname;
             document.getElementById('item_type').value = item.item_type;
-            document.getElementById('room_location').value = item.room_location;
-            document.getElementById('serial_number').value = item.serial_number;
+            document.getElementById('room_location').value = item.room_location || '';
+            document.getElementById('serial_number').value = item.serial_number || '';
             document.getElementById('mac_address').value = item.mac_address || '';
-            document.getElementById('asset_tag').value = item.asset_tag;
+            document.getElementById('asset_tag').value = item.asset_tag || '';
+            document.getElementById('ip_address').value = item.ip_address || '';
             document.getElementById('sub_location').value = item.sub_location || '';
             document.getElementById('notes').value = item.notes || '';
 
@@ -964,10 +980,11 @@
         const formData = {
             hostname: document.getElementById('hostname').value,
             item_type: document.getElementById('item_type').value,
-            room_location: document.getElementById('room_location').value,
-            serial_number: document.getElementById('serial_number').value,
+            room_location: document.getElementById('room_location').value || null,
+            serial_number: document.getElementById('serial_number').value || null,
             mac_address: document.getElementById('mac_address').value || null,
-            asset_tag: document.getElementById('asset_tag').value,
+            asset_tag: document.getElementById('asset_tag').value || null,
+            ip_address: document.getElementById('ip_address').value || null,
             sub_location: document.getElementById('sub_location').value || null,
             notes: document.getElementById('notes').value || null
         };
