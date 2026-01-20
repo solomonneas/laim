@@ -9,6 +9,11 @@ import io
 from contextlib import asynccontextmanager
 from typing import Optional
 
+# Room configuration - set via environment variable as comma-separated list
+# Example: LAIM_ROOMS="LTB 2265,LTB 2266,LTB 2280,LTB 2281,LTB 1305,LTB 1307"
+# If not set, rooms are dynamically populated from existing data
+CONFIGURED_ROOMS = [r.strip() for r in os.getenv("LAIM_ROOMS", "").split(",") if r.strip()]
+
 from fastapi import FastAPI, Depends, HTTPException, status, Request, Response, Query, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -189,8 +194,11 @@ async def dashboard(
         room_counts[room] = room_counts.get(room, 0) + 1
     stats["by_room"] = room_counts
 
-    # Get unique room locations from data
-    room_locations = sorted(set(i.room_location for i in items))
+    # Get room locations - use configured list if available, otherwise from data
+    if CONFIGURED_ROOMS:
+        room_locations = CONFIGURED_ROOMS
+    else:
+        room_locations = sorted(set(i.room_location for i in items))
 
     return templates.TemplateResponse(
         "dashboard.html",
@@ -507,6 +515,52 @@ async def get_stats(
         "by_type": by_type,
         "by_room": by_room
     }
+
+
+@app.post("/api/rooms/rename")
+async def rename_room(
+    old_name: str = Query(..., description="Current room name"),
+    new_name: str = Query(..., description="New room name"),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_admin)
+):
+    """Rename all items with a specific room to a new room name."""
+    # Count items to be updated
+    count_result = await db.execute(
+        select(func.count(InventoryItem.id)).where(
+            InventoryItem.room_location == old_name
+        )
+    )
+    count = count_result.scalar()
+
+    if count == 0:
+        raise HTTPException(status_code=404, detail=f"No items found with room '{old_name}'")
+
+    # Update all items
+    from sqlalchemy import update
+    await db.execute(
+        update(InventoryItem)
+        .where(InventoryItem.room_location == old_name)
+        .values(room_location=new_name)
+    )
+    await db.commit()
+
+    return {"message": f"Renamed {count} items from '{old_name}' to '{new_name}'"}
+
+
+@app.get("/api/rooms")
+async def list_rooms(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """List all unique room names in the database."""
+    result = await db.execute(
+        select(InventoryItem.room_location, func.count(InventoryItem.id))
+        .group_by(InventoryItem.room_location)
+        .order_by(InventoryItem.room_location)
+    )
+    rooms = [{"name": row[0], "count": row[1]} for row in result.fetchall()]
+    return {"rooms": rooms, "configured": CONFIGURED_ROOMS}
 
 
 # -----------------------------------------------------------------------------

@@ -64,6 +64,9 @@ services:
       # Sync Settings
       SYNC_ENABLED: ${SYNC_ENABLED:-true}
       SYNC_INTERVAL_HOURS: ${SYNC_INTERVAL_HOURS:-6}
+
+      # Room Configuration (comma-separated list of room names)
+      LAIM_ROOMS: ${LAIM_ROOMS:-}
     volumes:
       - ./app:/app/app:ro
       - ./templates:/app/templates:ro
