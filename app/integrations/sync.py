@@ -4,6 +4,7 @@ Device Sync Service - Merge, dedupe, and upsert from multiple sources
 """
 
 import logging
+import os
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -18,6 +19,28 @@ from app.integrations.netdisco import NetdiscoClient
 from app.integrations.librenms import LibreNMSClient
 
 logger = logging.getLogger(__name__)
+
+
+# -----------------------------------------------------------------------------
+# IP Exclusion Filtering
+# -----------------------------------------------------------------------------
+def get_excluded_ip_prefixes() -> list[str]:
+    """Get list of IP prefixes to exclude from sync."""
+    exclude_str = os.getenv("LAIM_EXCLUDE_IPS", "")
+    if not exclude_str:
+        return []
+    return [p.strip() for p in exclude_str.split(",") if p.strip()]
+
+
+def should_exclude_device(ip_address: Optional[str]) -> bool:
+    """Check if a device should be excluded based on its IP address."""
+    if not ip_address:
+        return False
+    prefixes = get_excluded_ip_prefixes()
+    for prefix in prefixes:
+        if ip_address.startswith(prefix):
+            return True
+    return False
 
 
 # -----------------------------------------------------------------------------
@@ -211,12 +234,16 @@ class DeviceSyncService:
 
         # First add Netdisco devices
         for device in netdisco_devices:
+            if should_exclude_device(device.ip_address):
+                continue
             key = self._get_device_key(device)
             if key:
                 merged[key] = device
 
         # Then add/override with LibreNMS devices (higher priority)
         for device in librenms_devices:
+            if should_exclude_device(device.ip_address):
+                continue
             key = self._get_device_key(device)
             if key:
                 if key in merged:
@@ -391,6 +418,7 @@ class DeviceSyncService:
         try:
             logger.info("Fetching devices from Netdisco...")
             devices = await self.netdisco.get_devices()
+            devices = [d for d in devices if not should_exclude_device(d.ip_address)]
             result.devices_found = len(devices)
 
             for device in devices:
@@ -423,6 +451,7 @@ class DeviceSyncService:
         try:
             logger.info("Fetching devices from LibreNMS...")
             devices = await self.librenms.get_devices()
+            devices = [d for d in devices if not should_exclude_device(d.ip_address)]
             result.devices_found = len(devices)
 
             for device in devices:
