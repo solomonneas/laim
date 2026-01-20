@@ -6,6 +6,7 @@ FastAPI Main Application
 import os
 import csv
 import io
+import re
 from contextlib import asynccontextmanager
 from typing import Optional
 
@@ -95,6 +96,20 @@ async def get_room_locations(db: AsyncSession) -> list[str]:
     )
     rooms = [r[0] for r in items_result.fetchall() if r[0]]
     return sorted(rooms) if rooms else []
+
+
+async def get_appearance_settings(db: AsyncSession) -> dict:
+    """Get appearance settings from database or return defaults."""
+    result = await db.execute(select(Settings).where(Settings.key == "appearance"))
+    setting = result.scalar_one_or_none()
+    if setting and setting.value:
+        return setting.value
+    return {
+        "title": "LAIM",
+        "icon": "chip",
+        "accentColor": "#3b82f6",
+        "secondaryColor": "#22d3ee"
+    }
 
 
 # -----------------------------------------------------------------------------
@@ -210,9 +225,10 @@ async def dashboard(
     )
     items = result.scalars().all()
 
-    # Get configured item types and rooms
+    # Get configured item types, rooms, and appearance
     item_types = await get_item_types(db)
     room_locations = await get_room_locations(db)
+    appearance = await get_appearance_settings(db)
 
     # Calculate stats
     stats = {
@@ -243,6 +259,7 @@ async def dashboard(
             "stats": stats,
             "item_types": item_types,
             "room_locations": room_locations,
+            "appearance": appearance,
         }
     )
 
@@ -1100,6 +1117,77 @@ async def update_rooms_api(
 
     await db.commit()
     return {"rooms": rooms, "message": "Room locations updated"}
+
+
+@app.get("/api/settings/appearance")
+async def get_appearance_api(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """Get appearance settings."""
+    result = await db.execute(select(Settings).where(Settings.key == "appearance"))
+    setting = result.scalar_one_or_none()
+    if setting and setting.value:
+        return {"appearance": setting.value}
+    # Return defaults
+    return {
+        "appearance": {
+            "title": "LAIM",
+            "icon": "chip",
+            "accentColor": "#3b82f6",
+            "secondaryColor": "#22d3ee"
+        }
+    }
+
+
+@app.put("/api/settings/appearance")
+async def update_appearance_api(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_admin)
+):
+    """Update appearance settings."""
+    body = await request.json()
+    appearance = body.get("appearance", {})
+
+    # Validate required fields
+    title = appearance.get("title", "LAIM").strip()[:30]
+    icon = appearance.get("icon", "chip")
+    accent_color = appearance.get("accentColor", "#3b82f6")
+    secondary_color = appearance.get("secondaryColor", "#22d3ee")
+
+    # Validate icon is in allowed list
+    allowed_icons = ["chip", "server", "database", "cube", "folder", "globe",
+                     "home", "office", "beaker", "clipboard", "collection", "desktop"]
+    if icon not in allowed_icons:
+        icon = "chip"
+
+    # Validate hex colors
+    hex_pattern = re.compile(r'^#[0-9A-Fa-f]{6}$')
+    if not hex_pattern.match(accent_color):
+        accent_color = "#3b82f6"
+    if not hex_pattern.match(secondary_color):
+        secondary_color = "#22d3ee"
+
+    appearance_data = {
+        "title": title or "LAIM",
+        "icon": icon,
+        "accentColor": accent_color,
+        "secondaryColor": secondary_color
+    }
+
+    # Update or create setting
+    result = await db.execute(select(Settings).where(Settings.key == "appearance"))
+    setting = result.scalar_one_or_none()
+
+    if setting:
+        setting.value = appearance_data
+    else:
+        setting = Settings(key="appearance", value=appearance_data)
+        db.add(setting)
+
+    await db.commit()
+    return {"appearance": appearance_data, "message": "Appearance settings updated"}
 
 
 # -----------------------------------------------------------------------------
