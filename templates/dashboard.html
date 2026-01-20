@@ -475,8 +475,13 @@
 
         try {
             const response = await fetch(`/api/items?${params}`);
-            if (!response.ok) throw new Error('Failed to fetch items');
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API Error:', response.status, errorText);
+                throw new Error('Failed to fetch items: ' + response.status);
+            }
             const items = await response.json();
+            console.log('Fetched items:', items.length, 'params:', params.toString());
             renderItems(items);
         } catch (error) {
             console.error('Error fetching items:', error);
