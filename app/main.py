@@ -888,6 +888,16 @@ async def create_backup(
     }
 
 
+def format_file_size(size_bytes: int) -> str:
+    """Format bytes into human-readable file size."""
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    elif size_bytes < 1024 * 1024:
+        return f"{size_bytes / 1024:.1f} KB"
+    else:
+        return f"{size_bytes / (1024 * 1024):.1f} MB"
+
+
 @app.get("/api/backups")
 async def list_backups(
     db: AsyncSession = Depends(get_db),
@@ -905,7 +915,8 @@ async def list_backups(
             "id": b.id,
             "created_at": b.created_at.isoformat(),
             "item_count": b.item_count,
-            "note": b.note
+            "note": b.note,
+            "file_size": format_file_size(len(str(b.data).encode('utf-8'))) if b.data else "0 B"
         }
         for b in backups
     ]
