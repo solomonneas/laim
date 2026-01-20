@@ -397,6 +397,34 @@ async def delete_item(
     return Response(status_code=204)
 
 
+@app.post("/api/items/bulk-room")
+async def bulk_update_room(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_admin)
+):
+    """Bulk update room location for multiple items."""
+    body = await request.json()
+    item_ids = body.get("item_ids", [])
+    new_room = body.get("room_location")
+
+    if not item_ids:
+        raise HTTPException(status_code=400, detail="No items specified")
+    if not new_room:
+        raise HTTPException(status_code=400, detail="Room location is required")
+
+    # Update all specified items
+    from sqlalchemy import update
+    result = await db.execute(
+        update(InventoryItem)
+        .where(InventoryItem.id.in_(item_ids))
+        .values(room_location=new_room, updated_by=user.id)
+    )
+    await db.commit()
+
+    return {"message": f"Updated {result.rowcount} items to room '{new_room}'", "updated": result.rowcount}
+
+
 # -----------------------------------------------------------------------------
 # User Management API (Superuser only)
 # -----------------------------------------------------------------------------

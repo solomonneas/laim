@@ -120,6 +120,9 @@
                     <table class="w-full">
                         <thead>
                             <tr class="bg-slate-900/50 border-b border-slate-700/50">
+                                <th class="px-4 py-3 text-left">
+                                    <input type="checkbox" id="select-all" class="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500 focus:ring-offset-0">
+                                </th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Hostname</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Type</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Serial Number</th>
@@ -133,7 +136,12 @@
                         <tbody id="items-table-body" class="divide-y divide-slate-700/50">
                             {% for item in items %}
                             <tr class="table-row-hover transition-smooth" data-id="{{ item.id }}">
-                                <td class="px-4 py-3 font-mono text-sm text-cyan-400 tabular-nums">{{ item.hostname }}</td>
+                                <td class="px-4 py-3">
+                                    <input type="checkbox" class="row-select w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500 focus:ring-offset-0" data-id="{{ item.id }}">
+                                </td>
+                                <td class="px-4 py-3 font-mono text-sm">
+                                    <button class="hostname-link text-cyan-400 hover:text-cyan-300 hover:underline tabular-nums" data-id="{{ item.id }}">{{ item.hostname }}</button>
+                                </td>
                                 <td class="px-4 py-3">
                                     <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md
                                         {% if item.item_type.value == 'Laptop' %}bg-purple-500/20 text-purple-400
@@ -147,7 +155,7 @@
                                 <td class="px-4 py-3 font-mono text-sm text-slate-300 tabular-nums">{{ item.serial_number }}</td>
                                 <td class="px-4 py-3 font-mono text-sm text-slate-300 tabular-nums">{{ item.mac_address or '-' }}</td>
                                 <td class="px-4 py-3 font-mono text-sm text-slate-300 tabular-nums">{{ item.asset_tag }}</td>
-                                <td class="px-4 py-3 text-sm text-slate-300">{{ item.room_location.value }}</td>
+                                <td class="px-4 py-3 text-sm text-slate-300">{{ item.room_location }}</td>
                                 <td class="px-4 py-3 text-sm text-slate-400">{{ item.sub_location or '-' }}</td>
                                 <td class="px-4 py-3 text-right">
                                     <div class="flex items-center justify-end gap-2">
@@ -175,6 +183,23 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
                     </svg>
                     <p class="mt-4 text-slate-400">No items found</p>
+                </div>
+            </div>
+
+            <!-- Bulk Actions Bar -->
+            <div id="bulk-actions-bar" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
+                <div class="bg-slate-800 border border-slate-600 rounded-xl shadow-2xl px-6 py-3 flex items-center gap-4">
+                    <span class="text-sm text-slate-300"><span id="selected-count">0</span> items selected</span>
+                    <div class="h-6 w-px bg-slate-600"></div>
+                    <button id="bulk-change-room" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-smooth flex items-center gap-2">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                        Change Room
+                    </button>
+                    <button id="bulk-cancel" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition-smooth">
+                        Cancel
+                    </button>
                 </div>
             </div>
         </div>
@@ -319,6 +344,142 @@
     </div>
 </div>
 
+<!-- Item Details Modal -->
+<div id="details-modal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-backdrop absolute inset-0" id="details-backdrop"></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+        <div class="relative bg-slate-850 rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-xl overflow-hidden">
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 px-6 py-4 border-b border-slate-700/50">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="h-10 w-10 flex items-center justify-center rounded-lg bg-cyan-500/20">
+                            <svg class="h-5 w-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 id="details-hostname" class="text-lg font-bold font-display text-white font-mono">Loading...</h2>
+                            <span id="details-type-badge" class="inline-flex px-2 py-0.5 text-xs font-medium rounded-md bg-blue-500/20 text-blue-400">-</span>
+                        </div>
+                    </div>
+                    <button id="close-details" class="p-1 text-slate-400 hover:text-white transition-smooth">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="p-6">
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- Serial Number -->
+                    <div class="bg-slate-900/50 rounded-lg p-3">
+                        <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Serial Number</div>
+                        <div id="details-serial" class="text-sm text-white font-mono tabular-nums">-</div>
+                    </div>
+                    <!-- MAC Address -->
+                    <div class="bg-slate-900/50 rounded-lg p-3">
+                        <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">MAC Address</div>
+                        <div id="details-mac" class="text-sm text-white font-mono tabular-nums">-</div>
+                    </div>
+                    <!-- Asset Tag -->
+                    <div class="bg-slate-900/50 rounded-lg p-3">
+                        <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Asset Tag</div>
+                        <div id="details-asset" class="text-sm text-white font-mono tabular-nums">-</div>
+                    </div>
+                    <!-- IP Address -->
+                    <div class="bg-slate-900/50 rounded-lg p-3">
+                        <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">IP Address</div>
+                        <div id="details-ip" class="text-sm text-white font-mono tabular-nums">-</div>
+                    </div>
+                    <!-- Room -->
+                    <div class="bg-slate-900/50 rounded-lg p-3">
+                        <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Room</div>
+                        <div id="details-room" class="text-sm text-white">-</div>
+                    </div>
+                    <!-- Sub-location -->
+                    <div class="bg-slate-900/50 rounded-lg p-3">
+                        <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Location</div>
+                        <div id="details-sublocation" class="text-sm text-white">-</div>
+                    </div>
+                    <!-- Vendor -->
+                    <div class="bg-slate-900/50 rounded-lg p-3">
+                        <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Vendor</div>
+                        <div id="details-vendor" class="text-sm text-white">-</div>
+                    </div>
+                    <!-- Model -->
+                    <div class="bg-slate-900/50 rounded-lg p-3">
+                        <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Model</div>
+                        <div id="details-model" class="text-sm text-white">-</div>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div id="details-notes-section" class="mt-4 hidden">
+                    <div class="bg-slate-900/50 rounded-lg p-3">
+                        <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Notes</div>
+                        <div id="details-notes" class="text-sm text-slate-300">-</div>
+                    </div>
+                </div>
+
+                <!-- Metadata -->
+                <div class="mt-4 flex items-center justify-between text-xs text-slate-500">
+                    <span>Created: <span id="details-created" class="text-slate-400">-</span></span>
+                    <span>Updated: <span id="details-updated" class="text-slate-400">-</span></span>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t border-slate-700/50 flex justify-end gap-3">
+                <button id="details-edit-btn" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-smooth flex items-center gap-2">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    Edit
+                </button>
+                <button id="details-close-btn" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition-smooth">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Room Change Modal -->
+<div id="bulk-room-modal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-backdrop absolute inset-0" id="bulk-room-backdrop"></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+        <div class="relative bg-slate-850 rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-sm p-6">
+            <div class="text-center">
+                <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-blue-500/10 text-blue-400">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                </div>
+                <h3 class="mt-4 text-lg font-bold text-white">Change Room</h3>
+                <p class="mt-2 text-sm text-slate-400">Move <span id="bulk-count">0</span> selected items to:</p>
+            </div>
+            <div class="mt-4">
+                <select id="bulk-room-select" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth">
+                    {% for room in room_locations %}
+                    <option value="{{ room }}">Room {{ room }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mt-6 flex gap-3">
+                <button id="cancel-bulk-room" class="flex-1 py-2 px-4 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition-smooth">
+                    Cancel
+                </button>
+                <button id="confirm-bulk-room" class="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-smooth">
+                    Move Items
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- CSV Import Modal -->
 <div id="csv-import-modal" class="fixed inset-0 z-50 hidden">
     <div class="modal-backdrop absolute inset-0" id="csv-backdrop"></div>
@@ -430,7 +591,9 @@
     // State
     let currentEditId = null;
     let currentDeleteId = null;
+    let currentDetailsId = null;
     let debounceTimer = null;
+    const selectedItems = new Set();
 
     // DOM Elements
     const searchInput = document.getElementById('search-input');
@@ -520,6 +683,11 @@
 
     // Render items to table
     function renderItems(items) {
+        // Clear selection when re-rendering
+        selectedItems.clear();
+        updateBulkActionsBar();
+        document.getElementById('select-all').checked = false;
+
         if (items.length === 0) {
             tableBody.innerHTML = '';
             emptyState.classList.remove('hidden');
@@ -529,7 +697,12 @@
         emptyState.classList.add('hidden');
         tableBody.innerHTML = items.map(item => `
             <tr class="table-row-hover transition-smooth" data-id="${item.id}">
-                <td class="px-4 py-3 font-mono text-sm text-cyan-400 tabular-nums">${escapeHtml(item.hostname)}</td>
+                <td class="px-4 py-3">
+                    <input type="checkbox" class="row-select w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500 focus:ring-offset-0" data-id="${item.id}">
+                </td>
+                <td class="px-4 py-3 font-mono text-sm">
+                    <button class="hostname-link text-cyan-400 hover:text-cyan-300 hover:underline tabular-nums" data-id="${item.id}">${escapeHtml(item.hostname)}</button>
+                </td>
                 <td class="px-4 py-3">
                     <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md ${typeBadgeClasses[item.item_type] || 'bg-slate-500/20 text-slate-400'}">
                         ${escapeHtml(item.item_type)}
@@ -582,6 +755,28 @@
                 const row = e.target.closest('tr');
                 const id = row.dataset.id;
                 openDeleteModal(id);
+            });
+        });
+
+        // Hostname click - show details
+        document.querySelectorAll('.hostname-link').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = e.target.dataset.id;
+                openDetailsModal(id);
+            });
+        });
+
+        // Row selection
+        document.querySelectorAll('.row-select').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const id = e.target.dataset.id;
+                if (e.target.checked) {
+                    selectedItems.add(id);
+                } else {
+                    selectedItems.delete(id);
+                }
+                updateBulkActionsBar();
+                updateSelectAllCheckbox();
             });
         });
     }
@@ -741,22 +936,224 @@
         });
     });
 
-    // Keyboard shortcuts
+    // Initial table row listeners
+    attachRowListeners();
+
+    // -------------------------------------------------------------------------
+    // Selection & Bulk Actions Functionality
+    // -------------------------------------------------------------------------
+    const selectAllCheckbox = document.getElementById('select-all');
+    const bulkActionsBar = document.getElementById('bulk-actions-bar');
+    const selectedCountEl = document.getElementById('selected-count');
+    const bulkChangeRoomBtn = document.getElementById('bulk-change-room');
+    const bulkCancelBtn = document.getElementById('bulk-cancel');
+    const bulkRoomModal = document.getElementById('bulk-room-modal');
+    const bulkRoomBackdrop = document.getElementById('bulk-room-backdrop');
+    const bulkRoomSelect = document.getElementById('bulk-room-select');
+    const bulkCountEl = document.getElementById('bulk-count');
+    const cancelBulkRoomBtn = document.getElementById('cancel-bulk-room');
+    const confirmBulkRoomBtn = document.getElementById('confirm-bulk-room');
+
+    function updateBulkActionsBar() {
+        const count = selectedItems.size;
+        selectedCountEl.textContent = count;
+        if (count > 0) {
+            bulkActionsBar.classList.remove('hidden');
+        } else {
+            bulkActionsBar.classList.add('hidden');
+        }
+    }
+
+    function updateSelectAllCheckbox() {
+        const allCheckboxes = document.querySelectorAll('.row-select');
+        const checkedCount = selectedItems.size;
+        if (checkedCount === 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        } else if (checkedCount === allCheckboxes.length) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
+
+    function clearSelection() {
+        selectedItems.clear();
+        document.querySelectorAll('.row-select').forEach(cb => cb.checked = false);
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+        updateBulkActionsBar();
+    }
+
+    // Select All checkbox
+    selectAllCheckbox.addEventListener('change', () => {
+        const checkboxes = document.querySelectorAll('.row-select');
+        if (selectAllCheckbox.checked) {
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+                selectedItems.add(cb.dataset.id);
+            });
+        } else {
+            checkboxes.forEach(cb => {
+                cb.checked = false;
+                selectedItems.delete(cb.dataset.id);
+            });
+        }
+        updateBulkActionsBar();
+    });
+
+    // Cancel selection
+    bulkCancelBtn.addEventListener('click', clearSelection);
+
+    // Open bulk room change modal
+    bulkChangeRoomBtn.addEventListener('click', () => {
+        bulkCountEl.textContent = selectedItems.size;
+        bulkRoomModal.classList.remove('hidden');
+    });
+
+    // Close bulk room modal
+    function closeBulkRoomModal() {
+        bulkRoomModal.classList.add('hidden');
+    }
+
+    cancelBulkRoomBtn.addEventListener('click', closeBulkRoomModal);
+    bulkRoomBackdrop.addEventListener('click', closeBulkRoomModal);
+
+    // Confirm bulk room change
+    confirmBulkRoomBtn.addEventListener('click', async () => {
+        const newRoom = bulkRoomSelect.value;
+        const itemIds = Array.from(selectedItems);
+
+        if (itemIds.length === 0) return;
+
+        confirmBulkRoomBtn.disabled = true;
+        confirmBulkRoomBtn.textContent = 'Moving...';
+
+        try {
+            const response = await fetch('/api/items/bulk-room', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ item_ids: itemIds.map(id => parseInt(id)), room_location: newRoom }),
+                credentials: 'same-origin'
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to update rooms');
+            }
+
+            closeBulkRoomModal();
+            clearSelection();
+            refreshData();
+        } catch (error) {
+            console.error('Error updating rooms:', error);
+            alert('Error: ' + error.message);
+        } finally {
+            confirmBulkRoomBtn.disabled = false;
+            confirmBulkRoomBtn.textContent = 'Move Items';
+        }
+    });
+
+    // -------------------------------------------------------------------------
+    // Item Details Modal Functionality
+    // -------------------------------------------------------------------------
+    const detailsModal = document.getElementById('details-modal');
+    const detailsBackdrop = document.getElementById('details-backdrop');
+    const closeDetailsBtn = document.getElementById('close-details');
+    const detailsCloseBtn = document.getElementById('details-close-btn');
+    const detailsEditBtn = document.getElementById('details-edit-btn');
+
+    async function openDetailsModal(id) {
+        currentDetailsId = id;
+        detailsModal.classList.remove('hidden');
+
+        // Reset fields while loading
+        document.getElementById('details-hostname').textContent = 'Loading...';
+        document.getElementById('details-type-badge').textContent = '-';
+        document.getElementById('details-serial').textContent = '-';
+        document.getElementById('details-mac').textContent = '-';
+        document.getElementById('details-asset').textContent = '-';
+        document.getElementById('details-ip').textContent = '-';
+        document.getElementById('details-room').textContent = '-';
+        document.getElementById('details-sublocation').textContent = '-';
+        document.getElementById('details-vendor').textContent = '-';
+        document.getElementById('details-model').textContent = '-';
+        document.getElementById('details-notes-section').classList.add('hidden');
+
+        try {
+            const response = await fetch(`/api/items/${id}`, { credentials: 'same-origin' });
+            if (!response.ok) throw new Error('Failed to fetch item');
+            const item = await response.json();
+
+            // Populate details
+            document.getElementById('details-hostname').textContent = item.hostname;
+
+            const typeBadge = document.getElementById('details-type-badge');
+            typeBadge.textContent = item.item_type;
+            typeBadge.className = `inline-flex px-2 py-0.5 text-xs font-medium rounded-md ${typeBadgeClasses[item.item_type] || 'bg-slate-500/20 text-slate-400'}`;
+
+            document.getElementById('details-serial').textContent = item.serial_number || '-';
+            document.getElementById('details-mac').textContent = item.mac_address || '-';
+            document.getElementById('details-asset').textContent = item.asset_tag || '-';
+            document.getElementById('details-ip').textContent = item.ip_address || '-';
+            document.getElementById('details-room').textContent = item.room_location || '-';
+            document.getElementById('details-sublocation').textContent = item.sub_location || '-';
+            document.getElementById('details-vendor').textContent = item.vendor || '-';
+            document.getElementById('details-model').textContent = item.model || '-';
+
+            if (item.notes) {
+                document.getElementById('details-notes').textContent = item.notes;
+                document.getElementById('details-notes-section').classList.remove('hidden');
+            }
+
+            // Format dates
+            if (item.created_at) {
+                document.getElementById('details-created').textContent = new Date(item.created_at).toLocaleDateString();
+            }
+            if (item.updated_at) {
+                document.getElementById('details-updated').textContent = new Date(item.updated_at).toLocaleDateString();
+            } else {
+                document.getElementById('details-updated').textContent = 'Never';
+            }
+        } catch (error) {
+            console.error('Error fetching item details:', error);
+            document.getElementById('details-hostname').textContent = 'Error loading details';
+        }
+    }
+
+    function closeDetailsModal() {
+        detailsModal.classList.add('hidden');
+        currentDetailsId = null;
+    }
+
+    closeDetailsBtn.addEventListener('click', closeDetailsModal);
+    detailsCloseBtn.addEventListener('click', closeDetailsModal);
+    detailsBackdrop.addEventListener('click', closeDetailsModal);
+
+    detailsEditBtn.addEventListener('click', () => {
+        if (currentDetailsId) {
+            closeDetailsModal();
+            openEditModal(currentDetailsId);
+        }
+    });
+
+    // Update keyboard shortcuts to include new modals
+    document.removeEventListener('keydown', () => {});
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeItemModal();
             closeDeleteModal();
             closeCsvModal();
+            closeDetailsModal();
+            closeBulkRoomModal();
         }
-        // Ctrl/Cmd + K for search focus
         if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
             e.preventDefault();
             searchInput.focus();
         }
     });
-
-    // Initial table row listeners
-    attachRowListeners();
 
     // -------------------------------------------------------------------------
     // CSV Import Functionality
