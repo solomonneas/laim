@@ -28,6 +28,12 @@
                             {{ user.role.value }}
                         </span>
                     </span>
+                    <button id="settings-btn" class="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-smooth" title="Settings">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </button>
                     <a href="/logout" class="text-sm text-slate-400 hover:text-white transition-smooth">
                         Logout
                     </a>
@@ -621,6 +627,68 @@
     </div>
 </div>
 
+<!-- Settings Modal -->
+<div id="settings-modal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-backdrop absolute inset-0" id="settings-backdrop"></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+        <div class="relative bg-slate-850 rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-2xl p-6">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h3 class="text-lg font-bold text-white">Settings</h3>
+                    <p class="text-sm text-slate-400 mt-1">Manage item types and room locations</p>
+                </div>
+                <button id="close-settings-modal" class="p-1 text-slate-400 hover:text-white transition-smooth">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex mb-6 border-b border-slate-700">
+                <button id="settings-tab-types" class="flex-1 py-2 text-sm font-medium text-emerald-400 border-b-2 border-emerald-400 transition-smooth">
+                    Item Types
+                </button>
+                <button id="settings-tab-rooms" class="flex-1 py-2 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent transition-smooth">
+                    Room Locations
+                </button>
+            </div>
+
+            <!-- Item Types Section -->
+            <div id="settings-types-section">
+                <div class="flex items-center gap-2 mb-4">
+                    <input type="text" id="new-type-input" placeholder="New item type name..."
+                           class="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <button id="add-type-btn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-smooth">
+                        Add
+                    </button>
+                </div>
+                <div id="item-types-list" class="space-y-2 max-h-64 overflow-y-auto">
+                    <p class="text-sm text-slate-400 text-center py-4">Loading item types...</p>
+                </div>
+            </div>
+
+            <!-- Room Locations Section -->
+            <div id="settings-rooms-section" class="hidden">
+                <div class="flex items-center gap-2 mb-4">
+                    <input type="text" id="new-room-input" placeholder="New room location..."
+                           class="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <button id="add-room-btn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-smooth">
+                        Add
+                    </button>
+                </div>
+                <div id="room-locations-list" class="space-y-2 max-h-64 overflow-y-auto">
+                    <p class="text-sm text-slate-400 text-center py-4">Loading room locations...</p>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-700">
+                <p class="text-xs text-slate-500">Changes are saved automatically. Refresh the page to see updates in dropdowns.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- CSV Import Modal -->
 <div id="csv-import-modal" class="fixed inset-0 z-50 hidden">
     <div class="modal-backdrop absolute inset-0" id="csv-backdrop"></div>
@@ -647,7 +715,7 @@
                 <p class="text-xs text-slate-300 font-mono">mac_address, sub_location, notes</p>
                 <h3 class="text-sm font-semibold text-blue-400 mt-3 mb-2">Valid Values:</h3>
                 <ul class="text-xs text-slate-300 space-y-1">
-                    <li><span class="font-mono">item_type:</span> Laptop, Desktop, Smart TV, Server, WAP, Router, Switch</li>
+                    <li><span class="font-mono">item_type:</span> Laptop, Desktop, Smart TV, Server, WAP, Firewall, Switch</li>
                     <li><span class="font-mono">room_location:</span> Any room name or number (e.g., 2265, Lab A, Server Room)</li>
                 </ul>
             </div>
@@ -1563,6 +1631,205 @@
 
     // Continue without backup
     syncContinue.addEventListener('click', performSync);
+
+    // -------------------------------------------------------------------------
+    // Settings Modal Functionality
+    // -------------------------------------------------------------------------
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsModal = document.getElementById('settings-modal');
+    const settingsBackdrop = document.getElementById('settings-backdrop');
+    const closeSettingsModalBtn = document.getElementById('close-settings-modal');
+    const settingsTabTypes = document.getElementById('settings-tab-types');
+    const settingsTabRooms = document.getElementById('settings-tab-rooms');
+    const settingsTypesSection = document.getElementById('settings-types-section');
+    const settingsRoomsSection = document.getElementById('settings-rooms-section');
+    const newTypeInput = document.getElementById('new-type-input');
+    const addTypeBtn = document.getElementById('add-type-btn');
+    const itemTypesList = document.getElementById('item-types-list');
+    const newRoomInput = document.getElementById('new-room-input');
+    const addRoomBtn = document.getElementById('add-room-btn');
+    const roomLocationsList = document.getElementById('room-locations-list');
+
+    let currentItemTypes = [];
+    let currentRoomLocations = [];
+
+    // Open settings modal
+    settingsBtn.addEventListener('click', () => {
+        settingsModal.classList.remove('hidden');
+        loadItemTypes();
+    });
+
+    // Close settings modal
+    function closeSettingsModal() {
+        settingsModal.classList.add('hidden');
+    }
+    closeSettingsModalBtn.addEventListener('click', closeSettingsModal);
+    settingsBackdrop.addEventListener('click', closeSettingsModal);
+
+    // Tab switching
+    settingsTabTypes.addEventListener('click', () => {
+        settingsTabTypes.classList.add('text-emerald-400', 'border-emerald-400');
+        settingsTabTypes.classList.remove('text-slate-400', 'border-transparent');
+        settingsTabRooms.classList.remove('text-emerald-400', 'border-emerald-400');
+        settingsTabRooms.classList.add('text-slate-400', 'border-transparent');
+        settingsTypesSection.classList.remove('hidden');
+        settingsRoomsSection.classList.add('hidden');
+        loadItemTypes();
+    });
+
+    settingsTabRooms.addEventListener('click', () => {
+        settingsTabRooms.classList.add('text-emerald-400', 'border-emerald-400');
+        settingsTabRooms.classList.remove('text-slate-400', 'border-transparent');
+        settingsTabTypes.classList.remove('text-emerald-400', 'border-emerald-400');
+        settingsTabTypes.classList.add('text-slate-400', 'border-transparent');
+        settingsRoomsSection.classList.remove('hidden');
+        settingsTypesSection.classList.add('hidden');
+        loadRoomLocations();
+    });
+
+    // Load item types
+    async function loadItemTypes() {
+        try {
+            const response = await fetch('/api/settings/item-types', { credentials: 'same-origin' });
+            if (!response.ok) throw new Error('Failed to load item types');
+            currentItemTypes = await response.json();
+            renderItemTypes();
+        } catch (error) {
+            console.error('Error loading item types:', error);
+            itemTypesList.innerHTML = '<p class="text-sm text-red-400 text-center py-4">Failed to load item types</p>';
+        }
+    }
+
+    // Render item types list
+    function renderItemTypes() {
+        if (currentItemTypes.length === 0) {
+            itemTypesList.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">No item types defined</p>';
+            return;
+        }
+
+        itemTypesList.innerHTML = currentItemTypes.map((type, index) => `
+            <div class="flex items-center justify-between p-3 bg-slate-900 rounded-lg">
+                <span class="text-sm text-white">${type}</span>
+                <button onclick="removeItemType(${index})" class="px-3 py-1 text-xs bg-red-600 hover:bg-red-500 text-white rounded transition-smooth">
+                    Remove
+                </button>
+            </div>
+        `).join('');
+    }
+
+    // Add item type
+    addTypeBtn.addEventListener('click', async () => {
+        const newType = newTypeInput.value.trim();
+        if (!newType) return;
+
+        if (currentItemTypes.includes(newType)) {
+            alert('This item type already exists');
+            return;
+        }
+
+        currentItemTypes.push(newType);
+        await saveItemTypes();
+        newTypeInput.value = '';
+        renderItemTypes();
+    });
+
+    // Remove item type (global function for onclick)
+    window.removeItemType = async function(index) {
+        if (!confirm(`Are you sure you want to remove "${currentItemTypes[index]}"?`)) {
+            return;
+        }
+        currentItemTypes.splice(index, 1);
+        await saveItemTypes();
+        renderItemTypes();
+    };
+
+    // Save item types
+    async function saveItemTypes() {
+        try {
+            const response = await fetch('/api/settings/item-types', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(currentItemTypes),
+                credentials: 'same-origin'
+            });
+            if (!response.ok) throw new Error('Failed to save item types');
+        } catch (error) {
+            console.error('Error saving item types:', error);
+            alert('Failed to save item types: ' + error.message);
+        }
+    }
+
+    // Load room locations
+    async function loadRoomLocations() {
+        try {
+            const response = await fetch('/api/settings/rooms', { credentials: 'same-origin' });
+            if (!response.ok) throw new Error('Failed to load room locations');
+            currentRoomLocations = await response.json();
+            renderRoomLocations();
+        } catch (error) {
+            console.error('Error loading room locations:', error);
+            roomLocationsList.innerHTML = '<p class="text-sm text-red-400 text-center py-4">Failed to load room locations</p>';
+        }
+    }
+
+    // Render room locations list
+    function renderRoomLocations() {
+        if (currentRoomLocations.length === 0) {
+            roomLocationsList.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">No room locations defined</p>';
+            return;
+        }
+
+        roomLocationsList.innerHTML = currentRoomLocations.map((room, index) => `
+            <div class="flex items-center justify-between p-3 bg-slate-900 rounded-lg">
+                <span class="text-sm text-white">${room}</span>
+                <button onclick="removeRoomLocation(${index})" class="px-3 py-1 text-xs bg-red-600 hover:bg-red-500 text-white rounded transition-smooth">
+                    Remove
+                </button>
+            </div>
+        `).join('');
+    }
+
+    // Add room location
+    addRoomBtn.addEventListener('click', async () => {
+        const newRoom = newRoomInput.value.trim();
+        if (!newRoom) return;
+
+        if (currentRoomLocations.includes(newRoom)) {
+            alert('This room location already exists');
+            return;
+        }
+
+        currentRoomLocations.push(newRoom);
+        await saveRoomLocations();
+        newRoomInput.value = '';
+        renderRoomLocations();
+    });
+
+    // Remove room location (global function for onclick)
+    window.removeRoomLocation = async function(index) {
+        if (!confirm(`Are you sure you want to remove "${currentRoomLocations[index]}"?`)) {
+            return;
+        }
+        currentRoomLocations.splice(index, 1);
+        await saveRoomLocations();
+        renderRoomLocations();
+    };
+
+    // Save room locations
+    async function saveRoomLocations() {
+        try {
+            const response = await fetch('/api/settings/rooms', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(currentRoomLocations),
+                credentials: 'same-origin'
+            });
+            if (!response.ok) throw new Error('Failed to save room locations');
+        } catch (error) {
+            console.error('Error saving room locations:', error);
+            alert('Failed to save room locations: ' + error.message);
+        }
+    }
 
     // -------------------------------------------------------------------------
     // Item Details Modal Functionality

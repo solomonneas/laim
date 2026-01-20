@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 # Device Type Auto-Detection
 # -----------------------------------------------------------------------------
 TYPE_PATTERNS: dict[ItemType, list[str]] = {
-    ItemType.ROUTER: [
-        "router", "isr", "asr", "cisco router", "juniper router",
+    ItemType.FIREWALL: [
+        "firewall", "router", "isr", "asr", "cisco router", "juniper router",
         "mikrotik router", "edgerouter", "routeros", "vyos",
         "pfsense", "opnsense", "fortigate", "srx", "udm", "usg",
         "dream machine", "security gateway", "sonicwall",

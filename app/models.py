@@ -32,7 +32,7 @@ class ItemType(enum.Enum):
     SMART_TV = "Smart TV"
     SERVER = "Server"
     WAP = "WAP"  # Wireless Access Point
-    ROUTER = "Router"
+    FIREWALL = "Firewall"
     SWITCH = "Switch"
 
 
@@ -221,3 +221,23 @@ class Backup(Base):
 
     def __repr__(self):
         return f"<Backup(id={self.id}, items={self.item_count}, created_at='{self.created_at}')>"
+
+
+# -----------------------------------------------------------------------------
+# Settings Model
+# -----------------------------------------------------------------------------
+class Settings(Base):
+    """Application settings stored in database."""
+    __tablename__ = "settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String(100), unique=True, nullable=False, index=True)
+    value = Column(JSON, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
+
+    def __repr__(self):
+        return f"<Settings(key='{self.key}')>"
+
+
+# Default item types
+DEFAULT_ITEM_TYPES = ["Laptop", "Desktop", "Smart TV", "Server", "WAP", "Firewall", "Switch"]

@@ -22,7 +22,7 @@ from sqlalchemy import select, or_, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db, init_db
-from app.models import User, InventoryItem, SyncLog, Backup, ItemType, UserRole, SyncStatus
+from app.models import User, InventoryItem, SyncLog, Backup, Settings, ItemType, UserRole, SyncStatus, DEFAULT_ITEM_TYPES
 from app.schemas import (
     UserCreate,
     UserResponse,
@@ -61,6 +61,39 @@ async def lifespan(app: FastAPI):
     start_scheduler()
     yield
     stop_scheduler()
+
+
+# -----------------------------------------------------------------------------
+# Settings Helpers
+# -----------------------------------------------------------------------------
+async def get_item_types(db: AsyncSession) -> list[str]:
+    """Get item types from settings or return defaults."""
+    result = await db.execute(select(Settings).where(Settings.key == "item_types"))
+    setting = result.scalar_one_or_none()
+    if setting and setting.value:
+        return setting.value
+    return DEFAULT_ITEM_TYPES
+
+
+async def get_room_locations(db: AsyncSession) -> list[str]:
+    """Get room locations from settings, env var, or data."""
+    # First check settings table
+    result = await db.execute(select(Settings).where(Settings.key == "room_locations"))
+    setting = result.scalar_one_or_none()
+    if setting and setting.value:
+        return setting.value
+    # Fall back to env var
+    if CONFIGURED_ROOMS:
+        return CONFIGURED_ROOMS
+    # Fall back to existing data
+    items_result = await db.execute(
+        select(InventoryItem.room_location)
+        .where(InventoryItem.is_active == True)
+        .where(InventoryItem.room_location.isnot(None))
+        .distinct()
+    )
+    rooms = [r[0] for r in items_result.fetchall() if r[0]]
+    return sorted(rooms) if rooms else []
 
 
 # -----------------------------------------------------------------------------
@@ -176,6 +209,10 @@ async def dashboard(
     )
     items = result.scalars().all()
 
+    # Get configured item types and rooms
+    item_types = await get_item_types(db)
+    room_locations = await get_room_locations(db)
+
     # Calculate stats
     stats = {
         "total": len(items),
@@ -183,22 +220,18 @@ async def dashboard(
         "by_room": {}
     }
 
-    for item_type in ItemType:
-        count = len([i for i in items if i.item_type == item_type])
-        stats["by_type"][item_type.value] = count
+    # Count by type (using configured types)
+    for type_name in item_types:
+        count = len([i for i in items if i.item_type and i.item_type.value == type_name])
+        stats["by_type"][type_name] = count
 
     # Count by room (dynamic from actual data)
     room_counts = {}
     for item in items:
         room = item.room_location
-        room_counts[room] = room_counts.get(room, 0) + 1
+        if room:
+            room_counts[room] = room_counts.get(room, 0) + 1
     stats["by_room"] = room_counts
-
-    # Get room locations - use configured list if available, otherwise from data
-    if CONFIGURED_ROOMS:
-        room_locations = CONFIGURED_ROOMS
-    else:
-        room_locations = sorted(set(i.room_location for i in items))
 
     return templates.TemplateResponse(
         "dashboard.html",
@@ -207,7 +240,7 @@ async def dashboard(
             "user": user,
             "items": items,
             "stats": stats,
-            "item_types": [t.value for t in ItemType],
+            "item_types": item_types,
             "room_locations": room_locations,
         }
     )
@@ -643,7 +676,8 @@ def parse_item_type(value: str) -> ItemType:
         "WAP": ItemType.WAP,
         "ACCESS POINT": ItemType.WAP,
         "AP": ItemType.WAP,
-        "ROUTER": ItemType.ROUTER,
+        "FIREWALL": ItemType.FIREWALL,
+        "ROUTER": ItemType.FIREWALL,  # Map Router to Firewall for backwards compatibility
         "SWITCH": ItemType.SWITCH,
     }
     if value in mapping:
@@ -938,6 +972,89 @@ async def delete_backup(
     await db.commit()
 
     return {"message": "Backup deleted"}
+
+
+# -----------------------------------------------------------------------------
+# Settings API Endpoints
+# -----------------------------------------------------------------------------
+@app.get("/api/settings/item-types")
+async def get_item_types_api(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """Get configured item types."""
+    types = await get_item_types(db)
+    return {"item_types": types}
+
+
+@app.put("/api/settings/item-types")
+async def update_item_types_api(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_admin)
+):
+    """Update configured item types."""
+    body = await request.json()
+    item_types = body.get("item_types", [])
+
+    if not item_types or not isinstance(item_types, list):
+        raise HTTPException(status_code=400, detail="item_types must be a non-empty list")
+
+    # Clean up types
+    item_types = [t.strip() for t in item_types if t and t.strip()]
+
+    # Update or create setting
+    result = await db.execute(select(Settings).where(Settings.key == "item_types"))
+    setting = result.scalar_one_or_none()
+
+    if setting:
+        setting.value = item_types
+    else:
+        setting = Settings(key="item_types", value=item_types)
+        db.add(setting)
+
+    await db.commit()
+    return {"item_types": item_types, "message": "Item types updated"}
+
+
+@app.get("/api/settings/rooms")
+async def get_rooms_api(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """Get configured room locations."""
+    rooms = await get_room_locations(db)
+    return {"rooms": rooms}
+
+
+@app.put("/api/settings/rooms")
+async def update_rooms_api(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_admin)
+):
+    """Update configured room locations."""
+    body = await request.json()
+    rooms = body.get("rooms", [])
+
+    if not isinstance(rooms, list):
+        raise HTTPException(status_code=400, detail="rooms must be a list")
+
+    # Clean up rooms
+    rooms = [r.strip() for r in rooms if r and r.strip()]
+
+    # Update or create setting
+    result = await db.execute(select(Settings).where(Settings.key == "room_locations"))
+    setting = result.scalar_one_or_none()
+
+    if setting:
+        setting.value = rooms
+    else:
+        setting = Settings(key="room_locations", value=rooms)
+        db.add(setting)
+
+    await db.commit()
+    return {"rooms": rooms, "message": "Room locations updated"}
 
 
 # -----------------------------------------------------------------------------
