@@ -61,13 +61,13 @@
                 <!-- Total -->
                 <div id="total-stat" class="bg-white dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700/50 p-4 cursor-pointer hover:border-blue-500/50 transition-smooth">
                     <div id="stat-total-count" class="text-2xl font-bold font-display text-slate-900 dark:text-white tabular-nums">{{ stats.total }}</div>
-                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Total Items</div>
+                    <div class="text-xs text-slate-600 dark:text-slate-400 mt-1">Total Items</div>
                 </div>
                 <!-- By Type -->
                 {% for type_name, count in stats.by_type.items() %}
                 <div class="bg-white dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700/50 p-4 cursor-pointer hover:border-blue-500/50 transition-smooth type-stat" data-type="{{ type_name }}">
                     <div id="stat-{{ type_name|lower|replace(' ', '-') }}-count" class="text-2xl font-bold font-display text-slate-900 dark:text-white tabular-nums">{{ count }}</div>
-                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">{% if count != 1 %}{% if type_name == 'Switch' %}Switches{% else %}{{ type_name }}s{% endif %}{% else %}{{ type_name }}{% endif %}</div>
+                    <div class="text-xs text-slate-600 dark:text-slate-400 mt-1">{% if count != 1 %}{% if type_name == 'Switch' %}Switches{% else %}{{ type_name }}s{% endif %}{% else %}{{ type_name }}{% endif %}</div>
                 </div>
                 {% endfor %}
             </div>
@@ -162,31 +162,31 @@
                                 <th class="px-4 py-3 text-left">
                                     <input type="checkbox" id="select-all" class="w-4 h-4 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-blue-500 focus:ring-blue-500 focus:ring-offset-0">
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="hostname">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="hostname">
                                     <span class="inline-flex items-center gap-1">Hostname <span class="sort-icon"></span></span>
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="item_type">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="item_type">
                                     <span class="inline-flex items-center gap-1">Type <span class="sort-icon"></span></span>
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="serial_number">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="serial_number">
                                     <span class="inline-flex items-center gap-1">Serial Number <span class="sort-icon"></span></span>
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="mac_address">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="mac_address">
                                     <span class="inline-flex items-center gap-1">MAC Address <span class="sort-icon"></span></span>
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="asset_tag">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="asset_tag">
                                     <span class="inline-flex items-center gap-1">Asset Tag <span class="sort-icon"></span></span>
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="ip_address">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="ip_address">
                                     <span class="inline-flex items-center gap-1">IP Address <span class="sort-icon"></span></span>
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="room_location">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="room_location">
                                     <span class="inline-flex items-center gap-1">Room <span class="sort-icon"></span></span>
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="location_detail">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="location_detail">
                                     <span class="inline-flex items-center gap-1">Location <span class="sort-icon"></span></span>
                                 </th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="items-table-body" class="divide-y divide-slate-200 dark:divide-slate-700/50">
@@ -213,7 +213,7 @@
                                 <td class="px-4 py-3 font-mono text-sm text-slate-600 dark:text-slate-300 tabular-nums">{{ item.asset_tag }}</td>
                                 <td class="px-4 py-3 font-mono text-sm text-slate-600 dark:text-slate-300 tabular-nums">{{ item.ip_address or '-' }}</td>
                                 <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{{ item.room_location }}</td>
-                                <td class="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">{{ item.sub_location or '-' }}</td>
+                                <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{{ item.sub_location or '-' }}</td>
                                 <td class="px-4 py-3 text-right">
                                     <div class="flex items-center justify-end gap-2">
                                         <button class="edit-btn p-1.5 text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-500/10 rounded transition-smooth" title="Edit">
@@ -677,7 +677,7 @@
                         Add
                     </button>
                 </div>
-                <p class="text-xs text-slate-500 dark:text-slate-500 mb-3">Drag items to reorder how they appear in dropdowns</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Drag items to reorder how they appear in dropdowns</p>
                 <div id="item-types-list" class="space-y-2 max-h-64 overflow-y-auto">
                     <p class="text-sm text-slate-400 text-center py-4">Loading item types...</p>
                 </div>
@@ -692,7 +692,7 @@
                         Add
                     </button>
                 </div>
-                <p class="text-xs text-slate-500 dark:text-slate-500 mb-3">Drag items to reorder how they appear in dropdowns</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Drag items to reorder how they appear in dropdowns</p>
                 <div id="room-locations-list" class="space-y-2 max-h-64 overflow-y-auto">
                     <p class="text-sm text-slate-400 text-center py-4">Loading room locations...</p>
                 </div>
@@ -899,11 +899,16 @@
 
     // Type badge colors
     const typeBadgeClasses = {
-        'Laptop': 'bg-purple-500/20 text-purple-400',
-        'Desktop': 'bg-blue-500/20 text-blue-400',
-        'Server': 'bg-emerald-500/20 text-emerald-400',
-        'WAP': 'bg-amber-500/20 text-amber-400',
-        'Smart TV': 'bg-pink-500/20 text-pink-400'
+        'Switch': 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-400',
+        'Firewall': 'bg-red-500/20 text-red-600 dark:text-red-400',
+        'Server': 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
+        'WAP': 'bg-amber-500/20 text-amber-600 dark:text-amber-400',
+        'Laptop': 'bg-purple-500/20 text-purple-600 dark:text-purple-400',
+        'Desktop': 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
+        'Smart TV': 'bg-pink-500/20 text-pink-600 dark:text-pink-400',
+        'UPS': 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400',
+        'PDU': 'bg-orange-500/20 text-orange-600 dark:text-orange-400',
+        'Other': 'bg-slate-500/20 text-slate-600 dark:text-slate-400'
     };
 
     // Fetch and render items
@@ -1042,7 +1047,7 @@
                     <button class="hostname-link text-cyan-400 hover:text-cyan-300 hover:underline tabular-nums" data-id="${item.id}">${escapeHtml(item.hostname)}</button>
                 </td>
                 <td class="px-4 py-3">
-                    <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md ${typeBadgeClasses[item.item_type] || 'bg-slate-500/20 text-slate-400'}">
+                    <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md ${typeBadgeClasses[item.item_type] || 'bg-slate-500/20 text-slate-600 dark:text-slate-400'}">
                         ${escapeHtml(item.item_type)}
                     </span>
                 </td>
@@ -1496,7 +1501,7 @@
                 <div class="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700/50">
                     <div>
                         <p class="text-sm text-slate-900 dark:text-white">${new Date(b.created_at).toLocaleString()}</p>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">${b.item_count} items · ${b.file_size || '0 B'}</p>
+                        <p class="text-xs text-slate-600 dark:text-slate-400">${b.item_count} items · ${b.file_size || '0 B'}</p>
                     </div>
                     <div class="flex gap-2">
                         <button onclick="restoreBackup(${b.id})" class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded transition-smooth">
@@ -2122,7 +2127,7 @@
 
             const typeBadge = document.getElementById('details-type-badge');
             typeBadge.textContent = item.item_type;
-            typeBadge.className = `inline-flex px-2 py-0.5 text-xs font-medium rounded-md ${typeBadgeClasses[item.item_type] || 'bg-slate-500/20 text-slate-400'}`;
+            typeBadge.className = `inline-flex px-2 py-0.5 text-xs font-medium rounded-md ${typeBadgeClasses[item.item_type] || 'bg-slate-500/20 text-slate-600 dark:text-slate-400'}`;
 
             document.getElementById('details-serial').textContent = item.serial_number || '-';
             document.getElementById('details-mac').textContent = item.mac_address || '-';
