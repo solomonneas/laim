@@ -300,28 +300,9 @@ class DeviceSyncService:
                 existing = await self._find_existing_item(device)
 
             if existing:
-                # Update existing item
-                if device.hostname:
-                    existing.hostname = device.hostname
-                if device.ip_address:
-                    existing.ip_address = device.ip_address
-                if device.model:
-                    existing.model = device.model
-                if device.vendor:
-                    existing.vendor = device.vendor
-                if device.firmware_version:
-                    existing.firmware_version = device.firmware_version
-                if device.mac_address and not existing.mac_address:
-                    existing.mac_address = device.mac_address
-                # Re-detect and update item type
-                detected_type = detect_item_type(device.model, device.vendor, device.hostname)
-                existing.item_type = detected_type
-                # Update sync tracking
-                existing.source = device.source
-                existing.source_id = device.source_id
-                existing.last_synced_at = datetime.now(timezone.utc)
-                result.updated += 1
-                logger.debug(f"Updated device: {device.hostname or device.ip_address} (type: {detected_type.value})")
+                # Skip existing items - don't overwrite manual edits
+                result.skipped += 1
+                logger.debug(f"Skipped existing device: {device.hostname or device.ip_address}")
             else:
                 # Create new item
                 item = InventoryItem(
