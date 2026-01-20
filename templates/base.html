@@ -22,6 +22,7 @@
 
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
@@ -40,26 +41,54 @@
         }
     </script>
 
+    <!-- Theme initialization (prevents flash) -->
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme') || 'dark';
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
+
     <style>
         /* Tabular numbers for data alignment */
         .tabular-nums {
             font-variant-numeric: tabular-nums;
         }
 
-        /* Custom scrollbar */
+        /* Custom scrollbar - dark mode */
+        .dark ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .dark ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        /* Custom scrollbar - light mode */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #1e293b;
+            background: #f1f5f9;
         }
         ::-webkit-scrollbar-thumb {
-            background: #475569;
+            background: #cbd5e1;
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
+            background: #94a3b8;
         }
 
         /* Smooth transitions */
@@ -68,8 +97,11 @@
         }
 
         /* Table row hover effect */
-        .table-row-hover:hover {
+        .dark .table-row-hover:hover {
             background-color: rgba(59, 130, 246, 0.08);
+        }
+        .table-row-hover:hover {
+            background-color: rgba(59, 130, 246, 0.1);
         }
 
         /* Focus ring style */
@@ -87,7 +119,7 @@
 
     {% block extra_head %}{% endblock %}
 </head>
-<body class="h-full bg-slate-925 text-slate-100 font-sans antialiased">
+<body class="h-full bg-slate-100 dark:bg-slate-925 text-slate-900 dark:text-slate-100 font-sans antialiased transition-colors duration-200">
     {% block body %}{% endblock %}
 
     {% block extra_scripts %}{% endblock %}

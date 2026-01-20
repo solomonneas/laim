@@ -5,7 +5,7 @@
 {% block body %}
 <div class="min-h-full flex flex-col">
     <!-- Header -->
-    <header class="bg-slate-850 border-b border-slate-700/50 sticky top-0 z-40">
+    <header class="bg-white dark:bg-slate-850 border-b border-slate-200 dark:border-slate-700/50 sticky top-0 z-40 transition-colors duration-200">
         <div class="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <!-- Logo -->
@@ -15,26 +15,37 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
                         </svg>
                     </div>
-                    <h1 class="text-lg font-bold font-display text-white">LAIM</h1>
+                    <h1 class="text-lg font-bold font-display text-slate-900 dark:text-white">LAIM</h1>
                 </div>
 
                 <!-- User Menu -->
                 <div class="flex items-center gap-4">
-                    <span class="text-sm text-slate-400">
+                    <span class="text-sm text-slate-600 dark:text-slate-400">
                         {{ user.username }}
                         <span class="ml-1 px-2 py-0.5 text-xs font-medium rounded-full
-                            {% if user.role.value == 'superuser' %}bg-amber-500/20 text-amber-400
-                            {% else %}bg-blue-500/20 text-blue-400{% endif %}">
+                            {% if user.role.value == 'superuser' %}bg-amber-500/20 text-amber-600 dark:text-amber-400
+                            {% else %}bg-blue-500/20 text-blue-600 dark:text-blue-400{% endif %}">
                             {{ user.role.value }}
                         </span>
                     </span>
-                    <button id="settings-btn" class="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-smooth" title="Settings">
+                    <!-- Theme Toggle -->
+                    <button id="theme-toggle" class="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-smooth" title="Toggle theme">
+                        <!-- Sun icon (shown in dark mode) -->
+                        <svg class="h-5 w-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                        </svg>
+                        <!-- Moon icon (shown in light mode) -->
+                        <svg class="h-5 w-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                        </svg>
+                    </button>
+                    <button id="settings-btn" class="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-smooth" title="Settings">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                         </svg>
                     </button>
-                    <a href="/logout" class="text-sm text-slate-400 hover:text-white transition-smooth">
+                    <a href="/logout" class="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-smooth">
                         Logout
                     </a>
                 </div>
@@ -48,39 +59,39 @@
             <!-- Stats Cards -->
             <div id="stats-container" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 mb-6">
                 <!-- Total -->
-                <div id="total-stat" class="bg-slate-850 rounded-xl border border-slate-700/50 p-4 cursor-pointer hover:border-blue-500/50 transition-smooth">
-                    <div id="stat-total-count" class="text-2xl font-bold font-display text-white tabular-nums">{{ stats.total }}</div>
-                    <div class="text-xs text-slate-400 mt-1">Total Items</div>
+                <div id="total-stat" class="bg-white dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700/50 p-4 cursor-pointer hover:border-blue-500/50 transition-smooth">
+                    <div id="stat-total-count" class="text-2xl font-bold font-display text-slate-900 dark:text-white tabular-nums">{{ stats.total }}</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Total Items</div>
                 </div>
                 <!-- By Type -->
                 {% for type_name, count in stats.by_type.items() %}
-                <div class="bg-slate-850 rounded-xl border border-slate-700/50 p-4 cursor-pointer hover:border-blue-500/50 transition-smooth type-stat" data-type="{{ type_name }}">
-                    <div id="stat-{{ type_name|lower|replace(' ', '-') }}-count" class="text-2xl font-bold font-display text-white tabular-nums">{{ count }}</div>
-                    <div class="text-xs text-slate-400 mt-1">{% if count != 1 %}{% if type_name == 'Switch' %}Switches{% else %}{{ type_name }}s{% endif %}{% else %}{{ type_name }}{% endif %}</div>
+                <div class="bg-white dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700/50 p-4 cursor-pointer hover:border-blue-500/50 transition-smooth type-stat" data-type="{{ type_name }}">
+                    <div id="stat-{{ type_name|lower|replace(' ', '-') }}-count" class="text-2xl font-bold font-display text-slate-900 dark:text-white tabular-nums">{{ count }}</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">{% if count != 1 %}{% if type_name == 'Switch' %}Switches{% else %}{{ type_name }}s{% endif %}{% else %}{{ type_name }}{% endif %}</div>
                 </div>
                 {% endfor %}
             </div>
 
             <!-- Controls Bar -->
-            <div class="bg-slate-850 rounded-xl border border-slate-700/50 p-4 mb-6">
+            <div class="bg-white dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700/50 p-4 mb-6">
                 <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
                     <!-- Search -->
                     <div class="relative flex-1 max-w-md w-full">
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
                         <input
                             type="text"
                             id="search-input"
                             placeholder="Search hostname, serial, MAC, asset tag..."
-                            class="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth font-mono text-sm"
+                            class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth font-mono text-sm"
                         >
                     </div>
 
                     <!-- Filters -->
                     <div class="flex flex-wrap items-center gap-3">
                         <!-- Type Filter -->
-                        <select id="type-filter" class="px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth">
+                        <select id="type-filter" class="px-3 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth">
                             <option value="">All Types</option>
                             {% for type_name in item_types %}
                             <option value="{{ type_name }}">{{ type_name }}</option>
@@ -88,7 +99,7 @@
                         </select>
 
                         <!-- Room Filter -->
-                        <select id="room-filter" class="px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth">
+                        <select id="room-filter" class="px-3 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth">
                             <option value="">All Rooms</option>
                             {% for room in room_locations %}
                             <option value="{{ room }}">Room {{ room }}</option>
@@ -143,74 +154,74 @@
             </div>
 
             <!-- Data Table -->
-            <div class="bg-slate-850 rounded-xl border border-slate-700/50 overflow-hidden">
+            <div class="bg-white dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700/50 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead>
-                            <tr class="bg-slate-900/50 border-b border-slate-700/50">
+                            <tr class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700/50">
                                 <th class="px-4 py-3 text-left">
-                                    <input type="checkbox" id="select-all" class="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500 focus:ring-offset-0">
+                                    <input type="checkbox" id="select-all" class="w-4 h-4 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-blue-500 focus:ring-blue-500 focus:ring-offset-0">
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-200 select-none" data-sort="hostname">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="hostname">
                                     <span class="inline-flex items-center gap-1">Hostname <span class="sort-icon"></span></span>
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-200 select-none" data-sort="item_type">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="item_type">
                                     <span class="inline-flex items-center gap-1">Type <span class="sort-icon"></span></span>
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-200 select-none" data-sort="serial_number">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="serial_number">
                                     <span class="inline-flex items-center gap-1">Serial Number <span class="sort-icon"></span></span>
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-200 select-none" data-sort="mac_address">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="mac_address">
                                     <span class="inline-flex items-center gap-1">MAC Address <span class="sort-icon"></span></span>
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-200 select-none" data-sort="asset_tag">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="asset_tag">
                                     <span class="inline-flex items-center gap-1">Asset Tag <span class="sort-icon"></span></span>
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-200 select-none" data-sort="ip_address">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="ip_address">
                                     <span class="inline-flex items-center gap-1">IP Address <span class="sort-icon"></span></span>
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-200 select-none" data-sort="room_location">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="room_location">
                                     <span class="inline-flex items-center gap-1">Room <span class="sort-icon"></span></span>
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-200 select-none" data-sort="location_detail">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider sortable-header cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 select-none" data-sort="location_detail">
                                     <span class="inline-flex items-center gap-1">Location <span class="sort-icon"></span></span>
                                 </th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Actions</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="items-table-body" class="divide-y divide-slate-700/50">
+                        <tbody id="items-table-body" class="divide-y divide-slate-200 dark:divide-slate-700/50">
                             {% for item in items %}
                             <tr class="table-row-hover transition-smooth" data-id="{{ item.id }}">
                                 <td class="px-4 py-3">
-                                    <input type="checkbox" class="row-select w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500 focus:ring-offset-0" data-id="{{ item.id }}">
+                                    <input type="checkbox" class="row-select w-4 h-4 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-blue-500 focus:ring-blue-500 focus:ring-offset-0" data-id="{{ item.id }}">
                                 </td>
                                 <td class="px-4 py-3 font-mono text-sm">
-                                    <button class="hostname-link text-cyan-400 hover:text-cyan-300 hover:underline tabular-nums" data-id="{{ item.id }}">{{ item.hostname }}</button>
+                                    <button class="hostname-link text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 hover:underline tabular-nums" data-id="{{ item.id }}">{{ item.hostname }}</button>
                                 </td>
                                 <td class="px-4 py-3">
                                     <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md
-                                        {% if item.item_type.value == 'Laptop' %}bg-purple-500/20 text-purple-400
-                                        {% elif item.item_type.value == 'Desktop' %}bg-blue-500/20 text-blue-400
-                                        {% elif item.item_type.value == 'Server' %}bg-emerald-500/20 text-emerald-400
-                                        {% elif item.item_type.value == 'WAP' %}bg-amber-500/20 text-amber-400
-                                        {% else %}bg-pink-500/20 text-pink-400{% endif %}">
+                                        {% if item.item_type.value == 'Laptop' %}bg-purple-500/20 text-purple-600 dark:text-purple-400
+                                        {% elif item.item_type.value == 'Desktop' %}bg-blue-500/20 text-blue-600 dark:text-blue-400
+                                        {% elif item.item_type.value == 'Server' %}bg-emerald-500/20 text-emerald-600 dark:text-emerald-400
+                                        {% elif item.item_type.value == 'WAP' %}bg-amber-500/20 text-amber-600 dark:text-amber-400
+                                        {% else %}bg-pink-500/20 text-pink-600 dark:text-pink-400{% endif %}">
                                         {{ item.item_type.value }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-3 font-mono text-sm text-slate-300 tabular-nums">{{ item.serial_number }}</td>
-                                <td class="px-4 py-3 font-mono text-sm text-slate-300 tabular-nums">{{ item.mac_address or '-' }}</td>
-                                <td class="px-4 py-3 font-mono text-sm text-slate-300 tabular-nums">{{ item.asset_tag }}</td>
-                                <td class="px-4 py-3 font-mono text-sm text-slate-300 tabular-nums">{{ item.ip_address or '-' }}</td>
-                                <td class="px-4 py-3 text-sm text-slate-300">{{ item.room_location }}</td>
-                                <td class="px-4 py-3 text-sm text-slate-400">{{ item.sub_location or '-' }}</td>
+                                <td class="px-4 py-3 font-mono text-sm text-slate-600 dark:text-slate-300 tabular-nums">{{ item.serial_number }}</td>
+                                <td class="px-4 py-3 font-mono text-sm text-slate-600 dark:text-slate-300 tabular-nums">{{ item.mac_address or '-' }}</td>
+                                <td class="px-4 py-3 font-mono text-sm text-slate-600 dark:text-slate-300 tabular-nums">{{ item.asset_tag }}</td>
+                                <td class="px-4 py-3 font-mono text-sm text-slate-600 dark:text-slate-300 tabular-nums">{{ item.ip_address or '-' }}</td>
+                                <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{{ item.room_location }}</td>
+                                <td class="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">{{ item.sub_location or '-' }}</td>
                                 <td class="px-4 py-3 text-right">
                                     <div class="flex items-center justify-end gap-2">
-                                        <button class="edit-btn p-1.5 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded transition-smooth" title="Edit">
+                                        <button class="edit-btn p-1.5 text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-500/10 rounded transition-smooth" title="Edit">
                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                             </svg>
                                         </button>
-                                        <button class="delete-btn p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-smooth" title="Delete">
+                                        <button class="delete-btn p-1.5 text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 rounded transition-smooth" title="Delete">
                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                             </svg>
@@ -277,11 +288,11 @@
 <div id="item-modal" class="fixed inset-0 z-50 hidden">
     <div class="modal-backdrop absolute inset-0" id="modal-backdrop"></div>
     <div class="relative min-h-full flex items-center justify-center p-4">
-        <div class="relative bg-slate-850 rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div class="relative bg-white dark:bg-slate-850 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <!-- Modal Header -->
-            <div class="sticky top-0 bg-slate-850 px-6 py-4 border-b border-slate-700/50 flex items-center justify-between">
-                <h2 id="modal-title" class="text-lg font-bold font-display text-white">Add Item</h2>
-                <button id="close-modal" class="p-1 text-slate-400 hover:text-white transition-smooth">
+            <div class="sticky top-0 bg-white dark:bg-slate-850 px-6 py-4 border-b border-slate-200 dark:border-slate-700/50 flex items-center justify-between">
+                <h2 id="modal-title" class="text-lg font-bold font-display text-slate-900 dark:text-white">Add Item</h2>
+                <button id="close-modal" class="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-smooth">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -293,26 +304,26 @@
                 <input type="hidden" id="item-id" name="id">
 
                 <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-1">Hostname *</label>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Hostname *</label>
                     <input type="text" id="hostname" name="hostname" required
-                        class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth"
+                        class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth"
                         placeholder="LAB-LAPTOP-001">
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-1">Item Type *</label>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Item Type *</label>
                         <select id="item_type" name="item_type" required
-                            class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth">
+                            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth">
                             {% for type_name in item_types %}
                             <option value="{{ type_name }}">{{ type_name }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-1">Room</label>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Room</label>
                         <select id="room_location" name="room_location"
-                            class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth">
+                            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth">
                             <option value="">-- Select Room --</option>
                             {% for room in room_locations %}
                             <option value="{{ room }}">Room {{ room }}</option>
@@ -323,45 +334,45 @@
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-1">Serial Number</label>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Serial Number</label>
                         <input type="text" id="serial_number" name="serial_number"
-                            class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth tabular-nums"
+                            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth tabular-nums"
                             placeholder="SN-12345678">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-1">Asset Tag</label>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Asset Tag</label>
                         <input type="text" id="asset_tag" name="asset_tag"
-                            class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth tabular-nums"
+                            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth tabular-nums"
                             placeholder="AST-2024-0001">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-1">MAC Address</label>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">MAC Address</label>
                         <input type="text" id="mac_address" name="mac_address"
-                            class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth tabular-nums"
+                            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth tabular-nums"
                             placeholder="00:1A:2B:3C:4D:5E">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-1">IP Address</label>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">IP Address</label>
                         <input type="text" id="ip_address" name="ip_address"
-                            class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth tabular-nums"
+                            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth tabular-nums"
                             placeholder="192.168.1.100">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-1">Sub-location</label>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Sub-location</label>
                     <input type="text" id="sub_location" name="sub_location"
-                        class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth"
+                        class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth"
                         placeholder="Rack 1, Shelf B, Desk 3">
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-1">Notes</label>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Notes</label>
                     <textarea id="notes" name="notes" rows="2"
-                        class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth resize-none"
+                        class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth resize-none"
                         placeholder="Additional notes..."></textarea>
                 </div>
 
@@ -384,7 +395,7 @@
 <div id="delete-modal" class="fixed inset-0 z-50 hidden">
     <div class="modal-backdrop absolute inset-0" id="delete-backdrop"></div>
     <div class="relative min-h-full flex items-center justify-center p-4">
-        <div class="relative bg-slate-850 rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-sm p-6">
+        <div class="relative bg-white dark:bg-slate-850 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 w-full max-w-sm p-6">
             <div class="text-center">
                 <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-red-500/10 text-red-400">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -410,7 +421,7 @@
 <div id="details-modal" class="fixed inset-0 z-50 hidden">
     <div class="modal-backdrop absolute inset-0" id="details-backdrop"></div>
     <div class="relative min-h-full flex items-center justify-center p-4">
-        <div class="relative bg-slate-850 rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-xl overflow-hidden">
+        <div class="relative bg-white dark:bg-slate-850 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 w-full max-w-xl overflow-hidden">
             <!-- Modal Header -->
             <div class="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 px-6 py-4 border-b border-slate-700/50">
                 <div class="flex items-center justify-between">
@@ -421,11 +432,11 @@
                             </svg>
                         </div>
                         <div>
-                            <h2 id="details-hostname" class="text-lg font-bold font-display text-white font-mono">Loading...</h2>
+                            <h2 id="details-hostname" class="text-lg font-bold font-display text-slate-900 dark:text-white font-mono">Loading...</h2>
                             <span id="details-type-badge" class="inline-flex px-2 py-0.5 text-xs font-medium rounded-md bg-blue-500/20 text-blue-400">-</span>
                         </div>
                     </div>
-                    <button id="close-details" class="p-1 text-slate-400 hover:text-white transition-smooth">
+                    <button id="close-details" class="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-smooth">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
@@ -513,7 +524,7 @@
 <div id="bulk-room-modal" class="fixed inset-0 z-50 hidden">
     <div class="modal-backdrop absolute inset-0" id="bulk-room-backdrop"></div>
     <div class="relative min-h-full flex items-center justify-center p-4">
-        <div class="relative bg-slate-850 rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-sm p-6">
+        <div class="relative bg-white dark:bg-slate-850 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 w-full max-w-sm p-6">
             <div class="text-center">
                 <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-blue-500/10 text-blue-400">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -524,7 +535,7 @@
                 <p class="mt-2 text-sm text-slate-400">Move <span id="bulk-count">0</span> selected items to:</p>
             </div>
             <div class="mt-4">
-                <select id="bulk-room-select" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth">
+                <select id="bulk-room-select" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth">
                     {% for room in room_locations %}
                     <option value="{{ room }}">Room {{ room }}</option>
                     {% endfor %}
@@ -546,7 +557,7 @@
 <div id="bulk-delete-modal" class="fixed inset-0 z-50 hidden">
     <div class="modal-backdrop absolute inset-0" id="bulk-delete-backdrop"></div>
     <div class="relative min-h-full flex items-center justify-center p-4">
-        <div class="relative bg-slate-850 rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-sm p-6">
+        <div class="relative bg-white dark:bg-slate-850 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 w-full max-w-sm p-6">
             <div class="text-center">
                 <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-red-500/10 text-red-400">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -572,7 +583,7 @@
 <div id="sync-modal" class="fixed inset-0 z-50 hidden">
     <div class="modal-backdrop absolute inset-0" id="sync-backdrop"></div>
     <div class="relative min-h-full flex items-center justify-center p-4">
-        <div class="relative bg-slate-850 rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-md p-6">
+        <div class="relative bg-white dark:bg-slate-850 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 w-full max-w-md p-6">
             <div class="text-center">
                 <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-purple-500/10 text-purple-400">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -605,10 +616,10 @@
 <div id="backup-modal" class="fixed inset-0 z-50 hidden">
     <div class="modal-backdrop absolute inset-0" id="backup-backdrop"></div>
     <div class="relative min-h-full flex items-center justify-center p-4">
-        <div class="relative bg-slate-850 rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-lg p-6">
+        <div class="relative bg-white dark:bg-slate-850 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 w-full max-w-lg p-6">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-bold text-white">Backups</h3>
-                <button id="close-backup-modal" class="p-1 text-slate-400 hover:text-white transition-smooth">
+                <button id="close-backup-modal" class="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-smooth">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -631,13 +642,13 @@
 <div id="settings-modal" class="fixed inset-0 z-50 hidden">
     <div class="modal-backdrop absolute inset-0" id="settings-backdrop"></div>
     <div class="relative min-h-full flex items-center justify-center p-4">
-        <div class="relative bg-slate-850 rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-2xl p-6">
+        <div class="relative bg-white dark:bg-slate-850 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 w-full max-w-2xl p-6">
             <div class="flex items-center justify-between mb-6">
                 <div>
                     <h3 class="text-lg font-bold text-white">Settings</h3>
-                    <p class="text-sm text-slate-400 mt-1">Manage item types and room locations</p>
+                    <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Manage item types, room locations, and account settings</p>
                 </div>
-                <button id="close-settings-modal" class="p-1 text-slate-400 hover:text-white transition-smooth">
+                <button id="close-settings-modal" class="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-smooth">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -652,13 +663,16 @@
                 <button id="settings-tab-rooms" class="flex-1 py-2 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent transition-smooth">
                     Room Locations
                 </button>
+                <button id="settings-tab-password" class="flex-1 py-2 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent transition-smooth">
+                    Password
+                </button>
             </div>
 
             <!-- Item Types Section -->
             <div id="settings-types-section">
                 <div class="flex items-center gap-2 mb-4">
                     <input type="text" id="new-type-input" placeholder="New item type name..."
-                           class="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                           class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     <button id="add-type-btn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-smooth">
                         Add
                     </button>
@@ -672,7 +686,7 @@
             <div id="settings-rooms-section" class="hidden">
                 <div class="flex items-center gap-2 mb-4">
                     <input type="text" id="new-room-input" placeholder="New room location..."
-                           class="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                           class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     <button id="add-room-btn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-smooth">
                         Add
                     </button>
@@ -682,7 +696,58 @@
                 </div>
             </div>
 
-            <div class="mt-6 pt-4 border-t border-slate-700">
+            <!-- Password Section -->
+            <div id="settings-password-section" class="hidden">
+                <form id="password-change-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Current Password</label>
+                        <div class="relative">
+                            <input type="password" id="current-password" required
+                                   class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 pr-10">
+                            <button type="button" onclick="togglePasswordVisibility('current-password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">New Password</label>
+                        <div class="relative">
+                            <input type="password" id="new-password" required minlength="8"
+                                   class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 pr-10">
+                            <button type="button" onclick="togglePasswordVisibility('new-password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">Minimum 8 characters</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Confirm New Password</label>
+                        <div class="relative">
+                            <input type="password" id="confirm-password" required minlength="8"
+                                   class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 pr-10">
+                            <button type="button" onclick="togglePasswordVisibility('confirm-password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="password-error" class="text-sm text-red-400 hidden"></div>
+                    <div id="password-success" class="text-sm text-emerald-400 hidden"></div>
+                    <button type="submit" class="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-smooth">
+                        Change Password
+                    </button>
+                </form>
+            </div>
+
+            <div id="settings-footer" class="mt-6 pt-4 border-t border-slate-700">
                 <p class="text-xs text-slate-500">Changes are saved automatically. Refresh the page to see updates in dropdowns.</p>
             </div>
         </div>
@@ -693,14 +758,14 @@
 <div id="csv-import-modal" class="fixed inset-0 z-50 hidden">
     <div class="modal-backdrop absolute inset-0" id="csv-backdrop"></div>
     <div class="relative min-h-full flex items-center justify-center p-4">
-        <div class="relative bg-slate-850 rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-2xl p-6">
+        <div class="relative bg-white dark:bg-slate-850 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 w-full max-w-2xl p-6">
             <!-- Modal Header -->
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h2 class="text-lg font-bold font-display text-white">Import CSV</h2>
-                    <p class="text-sm text-slate-400 mt-1">Upload a CSV file to bulk import inventory items</p>
+                    <h2 class="text-lg font-bold font-display text-slate-900 dark:text-white">Import CSV</h2>
+                    <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Upload a CSV file to bulk import inventory items</p>
                 </div>
-                <button id="close-csv-modal" class="p-1 text-slate-400 hover:text-white transition-smooth">
+                <button id="close-csv-modal" class="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-smooth">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -746,7 +811,7 @@
 
             <!-- Paste CSV -->
             <div id="csv-paste-section" class="mb-6 hidden">
-                <textarea id="csv-paste-input" rows="8" placeholder="hostname,serial_number,asset_tag,item_type,room_location&#10;PC-001,SN12345,AT001,Desktop,LTB 2265&#10;LT-002,SN12346,AT002,Laptop,LTB 2280" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth resize-none"></textarea>
+                <textarea id="csv-paste-input" rows="8" placeholder="hostname,serial_number,asset_tag,item_type,room_location&#10;PC-001,SN12345,AT001,Desktop,LTB 2265&#10;LT-002,SN12346,AT002,Laptop,LTB 2280" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth resize-none"></textarea>
                 <p class="text-xs text-slate-400 mt-2">Paste CSV data with headers in the first row</p>
             </div>
 
@@ -1641,14 +1706,20 @@
     const closeSettingsModalBtn = document.getElementById('close-settings-modal');
     const settingsTabTypes = document.getElementById('settings-tab-types');
     const settingsTabRooms = document.getElementById('settings-tab-rooms');
+    const settingsTabPassword = document.getElementById('settings-tab-password');
     const settingsTypesSection = document.getElementById('settings-types-section');
     const settingsRoomsSection = document.getElementById('settings-rooms-section');
+    const settingsPasswordSection = document.getElementById('settings-password-section');
+    const settingsFooter = document.getElementById('settings-footer');
     const newTypeInput = document.getElementById('new-type-input');
     const addTypeBtn = document.getElementById('add-type-btn');
     const itemTypesList = document.getElementById('item-types-list');
     const newRoomInput = document.getElementById('new-room-input');
     const addRoomBtn = document.getElementById('add-room-btn');
     const roomLocationsList = document.getElementById('room-locations-list');
+    const passwordChangeForm = document.getElementById('password-change-form');
+    const passwordError = document.getElementById('password-error');
+    const passwordSuccess = document.getElementById('password-success');
 
     let currentItemTypes = [];
     let currentRoomLocations = [];
@@ -1666,25 +1737,46 @@
     closeSettingsModalBtn.addEventListener('click', closeSettingsModal);
     settingsBackdrop.addEventListener('click', closeSettingsModal);
 
+    // Helper to reset all tabs
+    function resetSettingsTabs() {
+        [settingsTabTypes, settingsTabRooms, settingsTabPassword].forEach(tab => {
+            tab.classList.remove('text-emerald-400', 'border-emerald-400');
+            tab.classList.add('text-slate-400', 'border-transparent');
+        });
+        [settingsTypesSection, settingsRoomsSection, settingsPasswordSection].forEach(section => {
+            section.classList.add('hidden');
+        });
+    }
+
     // Tab switching
     settingsTabTypes.addEventListener('click', () => {
+        resetSettingsTabs();
         settingsTabTypes.classList.add('text-emerald-400', 'border-emerald-400');
         settingsTabTypes.classList.remove('text-slate-400', 'border-transparent');
-        settingsTabRooms.classList.remove('text-emerald-400', 'border-emerald-400');
-        settingsTabRooms.classList.add('text-slate-400', 'border-transparent');
         settingsTypesSection.classList.remove('hidden');
-        settingsRoomsSection.classList.add('hidden');
+        settingsFooter.classList.remove('hidden');
         loadItemTypes();
     });
 
     settingsTabRooms.addEventListener('click', () => {
+        resetSettingsTabs();
         settingsTabRooms.classList.add('text-emerald-400', 'border-emerald-400');
         settingsTabRooms.classList.remove('text-slate-400', 'border-transparent');
-        settingsTabTypes.classList.remove('text-emerald-400', 'border-emerald-400');
-        settingsTabTypes.classList.add('text-slate-400', 'border-transparent');
         settingsRoomsSection.classList.remove('hidden');
-        settingsTypesSection.classList.add('hidden');
+        settingsFooter.classList.remove('hidden');
         loadRoomLocations();
+    });
+
+    settingsTabPassword.addEventListener('click', () => {
+        resetSettingsTabs();
+        settingsTabPassword.classList.add('text-emerald-400', 'border-emerald-400');
+        settingsTabPassword.classList.remove('text-slate-400', 'border-transparent');
+        settingsPasswordSection.classList.remove('hidden');
+        settingsFooter.classList.add('hidden');
+        // Reset form state
+        passwordChangeForm.reset();
+        passwordError.classList.add('hidden');
+        passwordSuccess.classList.add('hidden');
     });
 
     // Load item types
@@ -1692,7 +1784,8 @@
         try {
             const response = await fetch('/api/settings/item-types', { credentials: 'same-origin' });
             if (!response.ok) throw new Error('Failed to load item types');
-            currentItemTypes = await response.json();
+            const data = await response.json();
+            currentItemTypes = data.item_types || [];
             renderItemTypes();
         } catch (error) {
             console.error('Error loading item types:', error);
@@ -1749,7 +1842,7 @@
             const response = await fetch('/api/settings/item-types', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(currentItemTypes),
+                body: JSON.stringify({ item_types: currentItemTypes }),
                 credentials: 'same-origin'
             });
             if (!response.ok) throw new Error('Failed to save item types');
@@ -1764,7 +1857,8 @@
         try {
             const response = await fetch('/api/settings/rooms', { credentials: 'same-origin' });
             if (!response.ok) throw new Error('Failed to load room locations');
-            currentRoomLocations = await response.json();
+            const data = await response.json();
+            currentRoomLocations = data.rooms || [];
             renderRoomLocations();
         } catch (error) {
             console.error('Error loading room locations:', error);
@@ -1821,7 +1915,7 @@
             const response = await fetch('/api/settings/rooms', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(currentRoomLocations),
+                body: JSON.stringify({ rooms: currentRoomLocations }),
                 credentials: 'same-origin'
             });
             if (!response.ok) throw new Error('Failed to save room locations');
@@ -1830,6 +1924,70 @@
             alert('Failed to save room locations: ' + error.message);
         }
     }
+
+    // Password visibility toggle (global function for onclick)
+    window.togglePasswordVisibility = function(inputId) {
+        const input = document.getElementById(inputId);
+        if (input.type === 'password') {
+            input.type = 'text';
+        } else {
+            input.type = 'password';
+        }
+    };
+
+    // Password change form submission
+    passwordChangeForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        passwordError.classList.add('hidden');
+        passwordSuccess.classList.add('hidden');
+
+        const currentPassword = document.getElementById('current-password').value;
+        const newPassword = document.getElementById('new-password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+
+        // Client-side validation
+        if (newPassword.length < 8) {
+            passwordError.textContent = 'New password must be at least 8 characters';
+            passwordError.classList.remove('hidden');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            passwordError.textContent = 'New passwords do not match';
+            passwordError.classList.remove('hidden');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/me/password', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    current_password: currentPassword,
+                    new_password: newPassword,
+                    confirm_password: confirmPassword
+                }),
+                credentials: 'same-origin'
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                passwordError.textContent = data.detail || 'Failed to change password';
+                passwordError.classList.remove('hidden');
+                return;
+            }
+
+            // Success
+            passwordSuccess.textContent = 'Password changed successfully';
+            passwordSuccess.classList.remove('hidden');
+            passwordChangeForm.reset();
+        } catch (error) {
+            console.error('Error changing password:', error);
+            passwordError.textContent = 'An error occurred. Please try again.';
+            passwordError.classList.remove('hidden');
+        }
+    });
 
     // -------------------------------------------------------------------------
     // Item Details Modal Functionality
@@ -2146,6 +2304,22 @@
             uploadCsvBtn.disabled = false;
         } else {
             alert('Please drop a CSV file');
+        }
+    });
+
+    // -------------------------------------------------------------------------
+    // Theme Toggle Functionality
+    // -------------------------------------------------------------------------
+    const themeToggle = document.getElementById('theme-toggle');
+
+    themeToggle.addEventListener('click', () => {
+        const isDark = document.documentElement.classList.contains('dark');
+        if (isDark) {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
         }
     });
 </script>

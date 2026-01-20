@@ -46,6 +46,7 @@ from app.auth import (
     authenticate_user,
     create_access_token,
     get_password_hash,
+    verify_password,
     require_admin,
     require_superuser,
 )
@@ -561,6 +562,39 @@ async def update_user(
     await db.commit()
     await db.refresh(user)
     return user
+
+
+# -----------------------------------------------------------------------------
+# Password Change API
+# -----------------------------------------------------------------------------
+@app.put("/api/me/password")
+async def change_password(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """Change the current user's password."""
+    body = await request.json()
+    current_password = body.get("current_password", "")
+    new_password = body.get("new_password", "")
+    confirm_password = body.get("confirm_password", "")
+
+    # Validate current password
+    if not verify_password(current_password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+
+    # Validate new password
+    if len(new_password) < 8:
+        raise HTTPException(status_code=400, detail="New password must be at least 8 characters")
+
+    if new_password != confirm_password:
+        raise HTTPException(status_code=400, detail="New passwords do not match")
+
+    # Update password
+    user.hashed_password = get_password_hash(new_password)
+    await db.commit()
+
+    return {"message": "Password changed successfully"}
 
 
 # -----------------------------------------------------------------------------

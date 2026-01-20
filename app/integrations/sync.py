@@ -256,6 +256,9 @@ class DeviceSyncService:
         if device.mac_address and device.mac_address.strip():
             conditions.append(InventoryItem.mac_address == device.mac_address.strip())
 
+        if device.ip_address and device.ip_address.strip():
+            conditions.append(InventoryItem.ip_address == device.ip_address.strip())
+
         if not conditions:
             return None
 
