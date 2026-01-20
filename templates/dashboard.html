@@ -40,16 +40,16 @@
     <main class="flex-1 py-6">
         <div class="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Stats Cards -->
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
+            <div id="stats-container" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
                 <!-- Total -->
-                <div class="bg-slate-850 rounded-xl border border-slate-700/50 p-4">
-                    <div class="text-2xl font-bold font-display text-white tabular-nums">{{ stats.total }}</div>
+                <div id="total-stat" class="bg-slate-850 rounded-xl border border-slate-700/50 p-4 cursor-pointer hover:border-blue-500/50 transition-smooth">
+                    <div id="stat-total-count" class="text-2xl font-bold font-display text-white tabular-nums">{{ stats.total }}</div>
                     <div class="text-xs text-slate-400 mt-1">Total Items</div>
                 </div>
                 <!-- By Type -->
                 {% for type_name, count in stats.by_type.items() %}
                 <div class="bg-slate-850 rounded-xl border border-slate-700/50 p-4 cursor-pointer hover:border-blue-500/50 transition-smooth type-stat" data-type="{{ type_name }}">
-                    <div class="text-2xl font-bold font-display text-white tabular-nums">{{ count }}</div>
+                    <div id="stat-{{ type_name|lower|replace(' ', '-') }}-count" class="text-2xl font-bold font-display text-white tabular-nums">{{ count }}</div>
                     <div class="text-xs text-slate-400 mt-1">{{ type_name }}{% if count != 1 %}s{% endif %}</div>
                 </div>
                 {% endfor %}
@@ -350,8 +350,18 @@
                 </ul>
             </div>
 
+            <!-- Import Mode Tabs -->
+            <div class="flex mb-4 border-b border-slate-700">
+                <button id="csv-tab-file" class="flex-1 py-2 text-sm font-medium text-emerald-400 border-b-2 border-emerald-400 transition-smooth">
+                    Upload File
+                </button>
+                <button id="csv-tab-paste" class="flex-1 py-2 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent transition-smooth">
+                    Paste CSV
+                </button>
+            </div>
+
             <!-- File Upload -->
-            <div class="mb-6">
+            <div id="csv-file-section" class="mb-6">
                 <input type="file" id="csv-file-input" accept=".csv" class="hidden">
                 <button id="select-csv-btn" class="w-full flex items-center justify-center gap-3 px-4 py-8 border-2 border-dashed border-slate-600 hover:border-emerald-500 rounded-lg transition-smooth group">
                     <svg class="h-8 w-8 text-slate-500 group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -362,6 +372,12 @@
                         <p class="text-xs text-slate-400">or drag and drop</p>
                     </div>
                 </button>
+            </div>
+
+            <!-- Paste CSV -->
+            <div id="csv-paste-section" class="mb-6 hidden">
+                <textarea id="csv-paste-input" rows="8" placeholder="hostname,serial_number,asset_tag,item_type,room_location&#10;PC-001,SN12345,AT001,Desktop,LTB 2265&#10;LT-002,SN12346,AT002,Laptop,LTB 2280" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-smooth resize-none"></textarea>
+                <p class="text-xs text-slate-400 mt-2">Paste CSV data with headers in the first row</p>
             </div>
 
             <!-- Progress Bar -->
@@ -465,6 +481,34 @@
         } catch (error) {
             console.error('Error fetching items:', error);
         }
+    }
+
+    // Fetch and update stats
+    async function fetchStats() {
+        try {
+            const response = await fetch('/api/stats');
+            if (!response.ok) throw new Error('Failed to fetch stats');
+            const stats = await response.json();
+
+            // Update total count
+            const totalEl = document.getElementById('stat-total-count');
+            if (totalEl) totalEl.textContent = stats.total;
+
+            // Update type counts
+            for (const [typeName, count] of Object.entries(stats.by_type)) {
+                const typeId = `stat-${typeName.toLowerCase().replace(' ', '-')}-count`;
+                const typeEl = document.getElementById(typeId);
+                if (typeEl) typeEl.textContent = count;
+            }
+        } catch (error) {
+            console.error('Error fetching stats:', error);
+        }
+    }
+
+    // Refresh both items and stats
+    function refreshData() {
+        fetchItems();
+        fetchStats();
     }
 
     // Render items to table
@@ -623,7 +667,7 @@
             }
 
             closeItemModal();
-            fetchItems();
+            refreshData();
         } catch (error) {
             formError.textContent = error.message;
             formError.classList.remove('hidden');
@@ -642,7 +686,7 @@
             if (!response.ok) throw new Error('Failed to delete item');
 
             closeDeleteModal();
-            fetchItems();
+            refreshData();
         } catch (error) {
             console.error('Error deleting item:', error);
         }
@@ -667,6 +711,14 @@
     cancelDeleteBtn.addEventListener('click', closeDeleteModal);
     deleteBackdrop.addEventListener('click', closeDeleteModal);
     confirmDeleteBtn.addEventListener('click', handleDelete);
+
+    // Total stat card click to reset filters
+    document.getElementById('total-stat').addEventListener('click', () => {
+        typeFilter.value = '';
+        roomFilter.value = '';
+        searchInput.value = '';
+        fetchItems();
+    });
 
     // Type stat card click to filter
     document.querySelectorAll('.type-stat').forEach(card => {
@@ -715,8 +767,14 @@
     const csvSkipped = document.getElementById('csv-skipped');
     const csvErrors = document.getElementById('csv-errors');
     const csvErrorsContainer = document.getElementById('csv-errors-container');
+    const csvTabFile = document.getElementById('csv-tab-file');
+    const csvTabPaste = document.getElementById('csv-tab-paste');
+    const csvFileSection = document.getElementById('csv-file-section');
+    const csvPasteSection = document.getElementById('csv-paste-section');
+    const csvPasteInput = document.getElementById('csv-paste-input');
 
     let selectedFile = null;
+    let csvImportMode = 'file'; // 'file' or 'paste'
 
     function openCsvModal() {
         csvImportModal.classList.remove('hidden');
@@ -732,17 +790,60 @@
         selectedFile = null;
         csvFileInput.value = '';
         csvFileName.textContent = 'Click to select CSV file';
+        csvPasteInput.value = '';
         uploadCsvBtn.disabled = true;
         csvProgress.classList.add('hidden');
         csvResults.classList.add('hidden');
         csvErrorsContainer.classList.add('hidden');
         csvProgressBar.style.width = '0%';
+        cancelCsvBtn.textContent = 'Cancel';
+        // Reset to file tab
+        csvImportMode = 'file';
+        csvTabFile.classList.add('text-emerald-400', 'border-emerald-400');
+        csvTabFile.classList.remove('text-slate-400', 'border-transparent');
+        csvTabPaste.classList.remove('text-emerald-400', 'border-emerald-400');
+        csvTabPaste.classList.add('text-slate-400', 'border-transparent');
+        csvFileSection.classList.remove('hidden');
+        csvPasteSection.classList.add('hidden');
+    }
+
+    function updateUploadButton() {
+        if (csvImportMode === 'file') {
+            uploadCsvBtn.disabled = !selectedFile;
+        } else {
+            uploadCsvBtn.disabled = !csvPasteInput.value.trim();
+        }
     }
 
     importCsvBtn.addEventListener('click', openCsvModal);
     closeCsvModalBtn.addEventListener('click', closeCsvModal);
     cancelCsvBtn.addEventListener('click', closeCsvModal);
     csvBackdrop.addEventListener('click', closeCsvModal);
+
+    // Tab switching
+    csvTabFile.addEventListener('click', () => {
+        csvImportMode = 'file';
+        csvTabFile.classList.add('text-emerald-400', 'border-emerald-400');
+        csvTabFile.classList.remove('text-slate-400', 'border-transparent');
+        csvTabPaste.classList.remove('text-emerald-400', 'border-emerald-400');
+        csvTabPaste.classList.add('text-slate-400', 'border-transparent');
+        csvFileSection.classList.remove('hidden');
+        csvPasteSection.classList.add('hidden');
+        updateUploadButton();
+    });
+
+    csvTabPaste.addEventListener('click', () => {
+        csvImportMode = 'paste';
+        csvTabPaste.classList.add('text-emerald-400', 'border-emerald-400');
+        csvTabPaste.classList.remove('text-slate-400', 'border-transparent');
+        csvTabFile.classList.remove('text-emerald-400', 'border-emerald-400');
+        csvTabFile.classList.add('text-slate-400', 'border-transparent');
+        csvPasteSection.classList.remove('hidden');
+        csvFileSection.classList.add('hidden');
+        updateUploadButton();
+    });
+
+    csvPasteInput.addEventListener('input', updateUploadButton);
 
     selectCsvBtn.addEventListener('click', () => {
         csvFileInput.click();
@@ -762,7 +863,17 @@
     });
 
     uploadCsvBtn.addEventListener('click', async () => {
-        if (!selectedFile) return;
+        let fileToUpload;
+
+        if (csvImportMode === 'file') {
+            if (!selectedFile) return;
+            fileToUpload = selectedFile;
+        } else {
+            // Paste mode - create a file from pasted text
+            const pastedText = csvPasteInput.value.trim();
+            if (!pastedText) return;
+            fileToUpload = new File([pastedText], 'pasted.csv', { type: 'text/csv' });
+        }
 
         // Show progress
         csvProgress.classList.remove('hidden');
@@ -771,7 +882,7 @@
         cancelCsvBtn.disabled = true;
 
         const formData = new FormData();
-        formData.append('file', selectedFile);
+        formData.append('file', fileToUpload);
 
         try {
             // Animate progress bar
@@ -808,8 +919,8 @@
                     csvErrors.innerHTML = result.errors.map(err => `<div>${escapeHtml(err)}</div>`).join('');
                 }
 
-                // Refresh the table
-                fetchItems();
+                // Refresh the table and stats
+                refreshData();
 
                 // Re-enable buttons
                 cancelCsvBtn.disabled = false;
