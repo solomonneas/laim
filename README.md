@@ -1,8 +1,10 @@
-# LAIM - Lab Asset Inventory Manager
+<p align="center">
+  <img src="static/logo.svg" alt="LAIM" width="300">
+</p>
 
-A modern, self-hosted inventory management system for lab environments.
+<h3 align="center">Lab Asset Inventory Manager</h3>
 
-![LAIM Dashboard](docs/login-screenshot.png)
+<p align="center">A modern, self-hosted inventory management system for lab environments.</p>
 
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green)
