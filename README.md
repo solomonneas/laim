@@ -54,4 +54,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-[Report Issues](https://github.com/solomonneas/laim/issues) | [Contribute](https://github.com/solomonneas/laim)
+[Report Issues](https://github.com/solomonneas/laim/issues)
