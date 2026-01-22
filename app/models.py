@@ -92,13 +92,13 @@ class InventoryItem(Base):
 
     # Core identification fields
     hostname = Column(String(255), nullable=False, index=True)
-    serial_number = Column(String(100), unique=True, nullable=False, index=True)
+    serial_number = Column(String(100), unique=True, nullable=True, index=True)
     mac_address = Column(String(17), unique=True, nullable=True, index=True)  # Format: XX:XX:XX:XX:XX:XX
-    asset_tag = Column(String(100), unique=True, nullable=False, index=True)
+    asset_tag = Column(String(100), unique=True, nullable=True, index=True)
 
     # Classification fields
     item_type = Column(SQLEnum(ItemType), nullable=False, index=True)
-    room_location = Column(String(100), nullable=False, index=True)  # Free-form room/location
+    room_location = Column(String(100), nullable=True, index=True)  # Free-form room/location
     sub_location = Column(String(100), nullable=True)  # e.g., "Rack 1", "Shelf B", "Desk 3"
 
     # Metadata
